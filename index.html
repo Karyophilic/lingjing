@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择困难终结者 · 随机决策助手</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="app-header">
+        <h1 class="app-title">🎯 选择困难终结者</h1>
+        <p class="app-subtitle">让随机替你决定，告别选择困难</p>
+    </header>
+
+    <!-- 模式切换 Tab -->
+    <nav class="mode-tabs">
+        <button class="mode-tab active" data-mode="basic">
+            <span class="tab-icon">🪙</span>
+            <span class="tab-label">基础款</span>
+            <span class="tab-desc">二元决策</span>
+        </button>
+        <button class="mode-tab" data-mode="advanced">
+            <span class="tab-icon">🎡</span>
+            <span class="tab-label">进阶款</span>
+            <span class="tab-desc">多元决策</span>
+        </button>
+        <button class="mode-tab" data-mode="fun">
+            <span class="tab-icon">🌸</span>
+            <span class="tab-label">趣味款</span>
+            <span class="tab-desc">花式随机</span>
+        </button>
+    </nav>
+
+    <!-- ==================== 基础款 ==================== -->
+    <main class="mode-panel active" id="panel-basic">
+        <div class="sub-tabs">
+            <button class="sub-tab active" data-sub="coin">🪙 抛硬币</button>
+            <button class="sub-tab" data-sub="yesno">✅ 是/否</button>
+            <button class="sub-tab" data-sub="picktwo">⚖️ 二选一</button>
+        </div>
+
+        <!-- 抛硬币 -->
+        <section class="sub-panel active" id="sub-coin">
+            <div class="decoration-area">
+                <div class="coin-stage">
+                    <div class="coin" id="coin">
+                        <div class="coin-face front">🪙</div>
+                        <div class="coin-face back">✨</div>
+                    </div>
+                </div>
+                <p class="coin-result" id="coin-result">点击硬币开始抛掷</p>
+            </div>
+            <button class="btn-primary" id="btn-flip-coin">🪙 抛硬币！</button>
+        </section>
+
+        <!-- 是/否 -->
+        <section class="sub-panel" id="sub-yesno">
+            <div class="input-group">
+                <label>你想问的问题是？</label>
+                <input type="text" id="yesno-question" class="text-input" placeholder="例如：今天要不要点奶茶？">
+            </div>
+            <div class="decoration-area">
+                <div class="yesno-display" id="yesno-display">
+                    <span class="yesno-icon">🤔</span>
+                </div>
+                <p class="yesno-result" id="yesno-result">等待你的问题...</p>
+            </div>
+            <button class="btn-primary" id="btn-yesno">🎲 给我答案！</button>
+        </section>
+
+        <!-- 二选一 -->
+        <section class="sub-panel" id="sub-picktwo">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>选项 A</label>
+                    <input type="text" id="picktwo-a" class="text-input" placeholder="例如：火锅">
+                </div>
+                <div class="vs-divider">VS</div>
+                <div class="input-group">
+                    <label>选项 B</label>
+                    <input type="text" id="picktwo-b" class="text-input" placeholder="例如：烤肉">
+                </div>
+            </div>
+            <div class="decoration-area">
+                <div class="picktwo-display" id="picktwo-display">
+                    <span class="picktwo-icon">⚡</span>
+                </div>
+                <p class="picktwo-result" id="picktwo-result">输入两个选项，我来帮你选</p>
+            </div>
+            <button class="btn-primary" id="btn-picktwo">⚖️ 帮我选！</button>
+        </section>
+    </main>
+
+    <!-- ==================== 进阶款 ==================== -->
+    <main class="mode-panel" id="panel-advanced">
+        <div class="sub-tabs">
+            <button class="sub-tab active" data-sub="wheel">🎡 幸运转盘</button>
+            <button class="sub-tab" data-sub="sticks">🎋 抽签筒</button>
+            <button class="sub-tab" data-sub="lots">📦 抓阄</button>
+        </div>
+
+        <!-- 幸运转盘 -->
+        <section class="sub-panel active" id="sub-wheel">
+            <div class="input-group">
+                <label>输入选项（每行一个，或用逗号分隔）</label>
+                <textarea id="wheel-options" class="text-input textarea" rows="3" placeholder="火锅&#10;烤肉&#10;日料&#10;麻辣烫&#10;螺蛳粉"></textarea>
+            </div>
+            <div class="decoration-area">
+                <canvas id="wheel-canvas" width="320" height="320"></canvas>
+                <div class="wheel-pointer">▼</div>
+                <p class="wheel-result" id="wheel-result">输入选项后点击转盘开始</p>
+            </div>
+            <button class="btn-primary" id="btn-wheel">🎡 开始旋转！</button>
+        </section>
+
+        <!-- 抽签筒 -->
+        <section class="sub-panel" id="sub-sticks">
+            <div class="input-group">
+                <label>输入签文（每行一个）</label>
+                <textarea id="sticks-options" class="text-input textarea" rows="3" placeholder="上上签 - 今天运气爆棚&#10;中签 - 平平淡淡才是真&#10;下签 - 宜宅家"></textarea>
+            </div>
+            <div class="decoration-area">
+                <div class="sticks-jar" id="sticks-jar">
+                    <div class="sticks-container" id="sticks-container">
+                        <!-- 动态生成签条 -->
+                    </div>
+                </div>
+                <p class="sticks-result" id="sticks-result">输入签文后摇一摇</p>
+            </div>
+            <button class="btn-primary" id="btn-sticks">🎋 摇签！</button>
+        </section>
+
+        <!-- 抓阄 -->
+        <section class="sub-panel" id="sub-lots">
+            <div class="input-group">
+                <label>输入选项（每行一个）</label>
+                <textarea id="lots-options" class="text-input textarea" rows="3" placeholder="方案A&#10;方案B&#10;方案C&#10;方案D"></textarea>
+            </div>
+            <div class="decoration-area">
+                <div class="lots-box" id="lots-box">
+                    <!-- 动态生成纸团 -->
+                </div>
+                <p class="lots-result" id="lots-result">输入选项后抓一个</p>
+            </div>
+            <button class="btn-primary" id="btn-lots">📦 抓阄！</button>
+        </section>
+    </main>
+
+    <!-- ==================== 趣味款 ==================== -->
+    <main class="mode-panel" id="panel-fun">
+        <div class="sub-tabs">
+            <button class="sub-tab active" data-sub="petals">🌸 数花瓣</button>
+        </div>
+
+        <!-- 数花瓣 -->
+        <section class="sub-panel active" id="sub-petals">
+            <div class="input-group">
+                <label>请输入你的小纠结（二选一）</label>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>选项 A</label>
+                    <input type="text" id="petals-a" class="text-input" placeholder="例如：他喜欢我">
+                </div>
+                <div class="vs-divider">&</div>
+                <div class="input-group">
+                    <label>选项 B</label>
+                    <input type="text" id="petals-b" class="text-input" placeholder="例如：他不喜欢我">
+                </div>
+            </div>
+            <div class="decoration-area">
+                <div class="flower-stage" id="flower-stage">
+                    <div class="flower-center">🌻</div>
+                    <div class="petal-trail" id="petal-trail"></div>
+                </div>
+                <p class="petals-result" id="petals-result">输入你的小纠结，我来帮你数花瓣...</p>
+            </div>
+            <button class="btn-primary" id="btn-petals">🌸 开始数花瓣！</button>
+        </section>
+    </main>
+
+    <!-- 历史记录侧边栏 -->
+    <aside class="history-panel" id="history-panel">
+        <div class="history-header">
+            <h3>📋 历史记录</h3>
+            <button class="btn-close" id="btn-close-history">✕</button>
+        </div>
+        <div class="history-list" id="history-list">
+            <p class="history-empty">暂无记录，快去做个决定吧！</p>
+        </div>
+        <button class="btn-clear" id="btn-clear-history">🗑️ 清空记录</button>
+    </aside>
+
+    <!-- 底部按钮 -->
+    <footer class="app-footer">
+        <button class="btn-secondary" id="btn-toggle-history">📋 历史记录</button>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/basic.js"></script>
+    <script src="js/advanced.js"></script>
+    <script src="js/fun.js"></script>
+</body>
+</html>
