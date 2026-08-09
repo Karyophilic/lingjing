@@ -6,7 +6,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [contentType, setContentType] = useState('text')
-  const [isPublic, setIsPublic] = useState(false)
+  const [isPublic, setIsPublic] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
   // 图片
@@ -261,17 +261,32 @@ export default function CreateInspiration({ onClose, onCreated }) {
             />
           </div>
 
-          {/* 公开/私密 */}
+          {/* 公开/私密 — 更显眼的开关 */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isPublic}
-                onChange={e => setIsPublic(e.target.checked)}
-                className="rounded border-gray-300 text-primary-500 focus:ring-primary-300"
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{isPublic ? '🌍' : '🔒'}</span>
+              <div>
+                <span className="text-sm font-medium text-gray-700">
+                  {isPublic ? '公开到灵感广场' : '仅自己可见'}
+                </span>
+                <p className="text-[11px] text-gray-400">
+                  {isPublic ? '所有人能在广场看到这条灵感' : '这条灵感不会出现在广场'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPublic(!isPublic)}
+              className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                isPublic ? 'bg-primary-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  isPublic ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                }`}
               />
-              公开到灵感广场
-            </label>
+            </button>
 
             <button
               type="submit"

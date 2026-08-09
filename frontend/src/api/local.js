@@ -325,15 +325,15 @@ export const localInspirations = {
   },
   delete(id) { const db = loadDB(); db.inspirations = db.inspirations.filter(x => x.id !== id); delete db.likes[id]; delete db.comments[id]; saveDB(db); return { success: true } },
   getSquare(tag, page = 1, limit = 20) {
-    const db = loadDB(); const archivedIds = Object.values(db.archived || {}).flat()
-    let items = db.inspirations.filter(i => i.is_public && !i.is_archived && !archivedIds.includes(i.id)).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    const db = loadDB()
+    let items = db.inspirations.filter(i => i.is_public).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     if (tag) items = items.filter(i => (i.tags || []).includes(tag))
     const offset = (page - 1) * limit; items = items.slice(offset, offset + limit).map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
     return { success: true, data: { items, page, limit } }
   },
   search(query) {
-    const db = loadDB(); const q = query.toLowerCase(); const archivedIds = Object.values(db.archived || {}).flat()
-    let items = db.inspirations.filter(i => i.is_public && !i.is_archived && !archivedIds.includes(i.id)).filter(i => i.title.toLowerCase().includes(q) || i.content.toLowerCase().includes(q) || (i.tags || []).some(t => t.toLowerCase().includes(q))).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    const db = loadDB(); const q = query.toLowerCase()
+    let items = db.inspirations.filter(i => i.is_public).filter(i => i.title.toLowerCase().includes(q) || i.content.toLowerCase().includes(q) || (i.tags || []).some(t => t.toLowerCase().includes(q))).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     items = items.map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
     return { success: true, data: { items } }
   },
