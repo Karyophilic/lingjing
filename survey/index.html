@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>灵感习惯调研 1分钟问卷</title>
+<style>
+  :root {
+    --primary: #6c63ff;
+    --amber: #f5a623;
+    --bg: #f8f9fc;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #8e8e9e;
+    --border: #e8e8f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container { width: 100%; max-width: 520px; }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px 30px;
+  }
+  .header .emoji { font-size: 56px; margin-bottom: 16px; }
+  .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .header p  { font-size: 15px; color: var(--muted); line-height: 1.6; }
+  .header .badge {
+    display: inline-block;
+    background: var(--amber);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-top: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-wrap {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--amber));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card .q-num {
+    font-size: 13px;
+    color: var(--primary);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .card .q-title {
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+  }
+  .option:hover { border-color: var(--primary); background: #f8f7ff; }
+  .option.selected {
+    border-color: var(--primary);
+    background: #f0eeff;
+    font-weight: 600;
+  }
+  .option .radio {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .option.selected .radio {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+  .option.selected .radio::after {
+    content: '';
+    width: 8px; height: 8px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .multi-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .option .checkbox {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: transparent;
+  }
+  .option.selected .checkbox {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); }
+  .btn-primary:disabled {
+    background: #ccc;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-secondary {
+    background: #fff;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    margin-top: 10px;
+  }
+
+  .result {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .result .big-emoji { font-size: 80px; margin-bottom: 20px; }
+  .result h2 { font-size: 24px; margin-bottom: 10px; }
+  .result p { color: var(--muted); font-size: 15px; line-height: 1.8; }
+  .result .stats {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 24px 0;
+    text-align: left;
+  }
+  .result .stat-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+  }
+  .result .stat-row:last-child { border: none; }
+  .result .stat-val { font-weight: 700; color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+// 问卷数据
+const questions = [
+  {
+    id: 'record_habit',
+    title: '你平时灵感来了怎么记录？',
+    type: 'single',
+    options: [
+      '备忘录 / 手机便签',
+      '微信发给自己',
+      '记在脑子里（经常忘）',
+      '笔记软件（Notion / 飞书 / Obsidian 等）',
+      '社交平台发帖（小红书 / 微博等）',
+      '不记录，灵感丢了就丢了',
+    ],
+  },
+  {
+    id: 'forget_freq',
+    title: '你有过"刚刚想到一个好东西，转头就忘了"的经历吗？',
+    type: 'single',
+    options: [
+      '几乎每天都有',
+      '每周几次',
+      '偶尔会有',
+      '很少，我记性很好',
+    ],
+  },
+  {
+    id: 'inspire_time',
+    title: '你的灵感最常出现在什么时候？',
+    type: 'multi',
+    hint: '可选多个',
+    options: [
+      '睡前 / 刚醒来的迷糊状态',
+      '洗澡 / 独处放空的时候',
+      '刷手机 / 看书 / 看视频被触动时',
+      '和别人聊天碰撞出想法时',
+      '任何时间，灵感说来就来',
+    ],
+  },
+  {
+    id: 'share_willing',
+    title: '你希望你的灵感被更多人看到吗？',
+    type: 'single',
+    options: [
+      '希望！想找到想法相似的人交流',
+      '看情况，部分想公开，部分想私藏',
+      '不太想，灵感和日记一样私密',
+      '没想过这个问题',
+    ],
+  },
+  {
+    id: 'try_willing',
+    title: '如果有一个产品 = 速记灵感 + AI帮你回顾遗忘的想法 + 匹配同频的人',
+    type: 'single',
+    options: [
+      '很想试试！这正是我需要的',
+      '有点兴趣，会关注一下',
+      '先看看别人用了再说',
+      '不太需要，现有工具够用了',
+    ],
+  },
+  {
+    id: 'priority',
+    title: '这样的产品，你最看重哪个？',
+    type: 'single',
+    options: [
+      '记录要快，打开就能写，不超过 3 秒',
+      'AI 要聪明，能帮我整理、联想、唤醒',
+      '能通过灵感找到同频的人，不想孤独创作',
+      '界面好看，用着舒服，有仪式感',
+    ],
+  },
+  {
+    id: 'age',
+    title: '最后一个问题：你的年龄段？',
+    type: 'single',
+    options: [
+      '18 岁以下',
+      '18 - 22 岁',
+      '23 - 25 岁',
+      '26 - 30 岁',
+      '30 岁以上',
+    ],
+  },
+];
+
+let currentQ = 0;
+let answers = {};
+
+function render() {
+  const app = document.getElementById('app');
+  const total = questions.length;
+  const progress = Math.round(((currentQ) / total) * 100);
+
+  if (currentQ >= total) {
+    showResult();
+    return;
+  }
+
+  const q = questions[currentQ];
+  const selected = answers[q.id] || (q.type === 'multi' ? [] : null);
+
+  const isAnswered = q.type === 'multi'
+    ? (selected.length > 0)
+    : (selected !== null);
+
+  let html = '';
+
+  // 头部
+  html += '<div class="header">';
+  html += '<div class="emoji">&#x1F4A1;</div>';
+  html += '<h1>灵感习惯小调研</h1>';
+  html += '<p>1 分钟，6-7 道选择题<br>帮你理清自己和灵感的关系</p>';
+  html += '<div class="badge">&#x1F9CB; 抽 3 位请喝奶茶</div>';
+  html += '</div>';
+
+  // 进度条
+  html += '<div class="progress-wrap">';
+  html += '<div class="progress-bar"><div class="progress-fill" style="width:' + progress + '%"></div></div>';
+  html += '<div class="progress-text">第 ' + (currentQ + 1) + ' / ' + total + ' 题</div>';
+  html += '</div>';
+
+  // 题目卡片
+  html += '<div class="card">';
+  html += '<div class="q-num">QUESTION ' + (currentQ + 1) + '</div>';
+  html += '<div class="q-title">' + q.title + '</div>';
+
+  if (q.type === 'multi' && q.hint) {
+    html += '<div class="multi-hint">' + q.hint + '</div>';
+  }
+
+  q.options.forEach((opt, i) => {
+    const isSel = q.type === 'multi'
+      ? selected.includes(i)
+      : (selected === i);
+    const selClass = isSel ? ' selected' : '';
+    html += '<div class="option' + selClass + '" onclick="selectOption(' + currentQ + ',' + i + ')">';
+    html += '<div class="' + (q.type === 'multi' ? 'checkbox' : 'radio') + '">';
+    if (q.type === 'multi' && isSel) html += '&#x2713;';
+    html += '</div>';
+    html += '<span>' + opt + '</span>';
+    html += '</div>';
+  });
+
+  html += '</div>';
+
+  // 按钮
+  html += '<button class="btn btn-primary" onclick="nextQuestion()"';
+  if (!isAnswered) html += ' disabled';
+  html += '>' + (currentQ === total - 1 ? '提交问卷' : '下一题') + '</button>';
+
+  if (currentQ > 0) {
+    html += '<button class="btn btn-secondary" onclick="prevQuestion()">返回上一题</button>';
+  }
+
+  app.innerHTML = html;
+}
+
+function selectOption(qIdx, optIdx) {
+  const q = questions[qIdx];
+  if (q.type === 'multi') {
+    if (!answers[q.id]) answers[q.id] = [];
+    const arr = answers[q.id];
+    const pos = arr.indexOf(optIdx);
+    if (pos > -1) arr.splice(pos, 1);
+    else arr.push(optIdx);
+  } else {
+    answers[q.id] = optIdx;
+  }
+  render();
+}
+
+function nextQuestion() {
+  currentQ++;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevQuestion() {
+  currentQ--;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showResult() {
+  // 统计
+  let total = 0;
+  const counts = {};
+  Object.values(answers).forEach(v => {
+    if (Array.isArray(v)) v.forEach(x => { counts[x] = (counts[x] || 0) + 1; total++; });
+    else { counts[v] = (counts[v] || 0) + 1; total++; }
+  });
+
+  // 保存到 localStorage
+  const allAnswers = JSON.parse(localStorage.getItem('lingjing_survey') || '[]');
+  allAnswers.push({ timestamp: new Date().toISOString(), answers });
+  localStorage.setItem('lingjing_survey', JSON.stringify(allAnswers));
+
+  // 判断用户类型
+  const tryWilling = answers['try_willing'];
+  const shareWilling = answers['share_willing'];
+  const forget = answers['forget_freq'];
+
+  let typeEmoji = '&#x1F31F;';
+  let typeText = '你是典型的灵感体质';
+  let typeDesc = '';
+
+  if (tryWilling <= 1 && forget <= 1) {
+    typeEmoji = '&#x1F525;';
+    typeText = '你是灵感急先锋';
+    typeDesc = '灵感多、忘得快、对解决方案极度渴求。你是这个产品的第一批种子用户。';
+  } else if (shareWilling <= 1 && tryWilling <= 1) {
+    typeEmoji = '&#x1F91D;';
+    typeText = '你是灵感社交家';
+    typeDesc = '不只在乎记录，更在乎"谁能和我一起想"。社交属性是你的核心驱动力。';
+  } else if (tryWilling === 2) {
+    typeEmoji = '&#x1F440;';
+    typeText = '你是灵感观望者';
+    typeDesc = '有兴趣但需要看到成品才决定。产品上线后用 MVP 展示核心体验可转化你。';
+  } else {
+    typeEmoji = '&#x1F4AD;';
+    typeText = '你是灵感独行者';
+    typeDesc = '对现有工具比较满意，或者灵感管理不是你的主要痛点。你可能是被社交功能吸引来的。';
+  }
+
+  const app = document.getElementById('app');
+  let html = '';
+
+  html += '<div class="result">';
+  html += '<div class="big-emoji">' + typeEmoji + '</div>';
+  html += '<h2>' + typeText + '</h2>';
+  html += '<p>' + typeDesc + '</p>';
+
+  html += '<div class="stats">';
+  html += '<div class="stat-row"><span>已完成问卷总数</span><span class="stat-val">' + allAnswers.length + ' 份</span></div>';
+  html += '<div class="stat-row"><span>很想试试产品的比例</span><span class="stat-val">' + ((allAnswers.filter(a => a.answers.try_willing <= 1).length / allAnswers.length * 100) || 0).toFixed(0) + '%</span></div>';
+  html += '</div>';
+
+  html += '<p style="font-size:13px;color:var(--muted)">感谢你的参与！<br>关注我，产品上线后第一时间通知你。</p>';
+
+  html += '<button class="btn btn-primary" style="margin-top:24px" onclick="shareSurvey()">分享给朋友</button>';
+  html += '<button class="btn btn-secondary" onclick="viewAdmin()">查看所有回收数据</button>';
+
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+function shareSurvey() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: '灵感习惯小调研', text: '1分钟，看看你是哪种灵感体质', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => alert('链接已复制，分享给朋友吧'));
+  }
+}
+
+let showAdmin = false;
+function viewAdmin() {
+  showAdmin = !showAdmin;
+  renderAdmin();
+}
+
+function renderAdmin() {
+  const allAnswers = JSON.parse(localStorage.getItem('lingjing_survey') || '[]');
+  if (allAnswers.length === 0) return;
+
+  const app = document.getElementById('app');
+  let html = app.innerHTML;
+
+  if (showAdmin) {
+    html += '<div class="card" style="margin-top:16px">';
+    html += '<h3 style="margin-bottom:16px">所有回收数据 (' + allAnswers.length + ' 份)</h3>';
+    html += '<p style="font-size:12px;color:var(--muted);margin-bottom:12px">复制以下 JSON 到 Excel 或问卷工具中分析</p>';
+    html += '<textarea readonly style="width:100%;height:200px;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:12px;resize:vertical;font-family:monospace">';
+    html += JSON.stringify(allAnswers, null, 2);
+    html += '</textarea>';
+    html += '<p style="font-size:12px;color:var(--muted);margin-top:8px">数据存储在浏览器本地，部署到服务器后可集中收集。</p>';
+    html += '</div>';
+  }
+
+  html += '<p style="text-align:center;margin-top:32px;font-size:12px;color:var(--muted)">灵感社交平台 用户调研 v1</p>';
+  app.innerHTML = html;
+}
+
+// 启动
+render();
+</script>
+</body>
+</html>

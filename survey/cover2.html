@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1080"><title>封面2-截图感</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#e5e5e5}
+  .cover{
+    width:1080px;height:1440px;background:#1c1c1e;
+    display:flex;justify-content:center;align-items:center
+  }
+  .phone{
+    width:780px;height:1100px;background:#000;
+    border-radius:60px;padding:60px 50px;
+    display:flex;flex-direction:column
+  }
+  .status{display:flex;justify-content:space-between;color:#666;font-size:28px;margin-bottom:40px}
+  .chat-area{flex:1;display:flex;flex-direction:column;justify-content:flex-end}
+  .msg{max-width:85%;padding:28px 36px;border-radius:36px;font-size:32px;line-height:1.5;margin-bottom:20px}
+  .msg.received{background:#262628;color:#ddd;align-self:flex-start;border-bottom-left-radius:8px}
+  .msg.sent{background:#0a84ff;color:#fff;align-self:flex-end;border-bottom-right-radius:8px}
+  .input-bar{
+    display:flex;align-items:center;gap:16px;
+    margin-top:30px;padding:24px 0;border-top:1px solid #222
+  }
+  .input-box{
+    flex:1;background:#1c1c1e;border-radius:30px;
+    padding:24px 32px;color:#555;font-size:28px
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>文件传输助手</span></div>
+    <div class="chat-area">
+      <div class="msg received">突然想到一个很妙的点子</div>
+      <div class="msg sent" style="margin-bottom:24px">什么？</div>
+      <div class="msg received" style="margin-bottom:40px">忘了。</div>
+      <div class="msg received" style="margin-bottom:60px;font-size:50px">……</div>
+    </div>
+    <div class="input-bar">
+      <div class="input-box">今天又忘了一个想法</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

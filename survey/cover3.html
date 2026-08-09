@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1080"><title>封面3-极简</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#e5e5e5}
+  .cover{
+    width:1080px;height:1440px;
+    background:linear-gradient(180deg,#f7f5f0 0%,#ede8dd 100%);
+    display:flex;justify-content:center;align-items:center;
+    position:relative
+  }
+  .content{text-align:center;padding:0 120px}
+  .emoji{font-size:72px;margin-bottom:48px}
+  .main{font-size:52px;color:#8c8c84;line-height:1.6;font-weight:400}
+  .cursor{display:inline-block;width:3px;height:52px;background:#c4c0b8;margin-left:4px;vertical-align:middle;animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .tiny{font-size:28px;color:#c4c0b8;margin-top:80px;letter-spacing:0.1em}
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="content">
+    <div class="emoji">💡</div>
+    <div class="main">
+      今天又忘了<br>
+      三个想法<span class="cursor"></span>
+    </div>
+    <div class="tiny">点进来的人，大概也一样吧</div>
+  </div>
+</div>
+</body>
+</html>
