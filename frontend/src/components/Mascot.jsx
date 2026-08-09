@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 const DIALOGUES = [
   '嘿！有个灵感在偷偷溜走哦~ 快抓住它！',
@@ -18,12 +18,130 @@ const DIALOGUES = [
   '我好喜欢看你记录灵感的样子！认真的你最棒了 🌟',
 ]
 
+const DRAG_THRESHOLD = 5 // px — 超过此距离视为拖拽而非点击
+const STORAGE_KEY = 'lingjing_mascot_pos'
+const DEFAULT_RIGHT = 16
+const DEFAULT_BOTTOM = 96
+
+function loadPosition() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch (e) { /* ignore */ }
+  return null
+}
+
+function savePosition(pos) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pos))
+  } catch (e) { /* ignore */ }
+}
+
 export default function Mascot() {
   const [dialogue, setDialogue] = useState(null)
   const [animating, setAnimating] = useState(false)
   const [touches, setTouches] = useState(0)
 
+  // 拖拽状态
+  const dragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    startTop: 0,
+    moved: false,
+  })
+
+  // 位置：用 right/bottom 定位（便于初始位置和持久化）
+  const [position, setPosition] = useState(() => {
+    const saved = loadPosition()
+    return saved || { right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM }
+  })
+
+  // 容器 ref 用于获取尺寸做边界限制
+  const containerRef = useRef(null)
+
+  // 持久化位置
+  useEffect(() => {
+    savePosition(position)
+  }, [position])
+
+  // 全局移动 & 释放
+  useEffect(() => {
+    const handleMove = (e) => {
+      const drag = dragRef.current
+      if (!drag.isDragging) return
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY
+
+      const dx = clientX - drag.startX
+      const dy = clientY - drag.startY
+
+      if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+        drag.moved = true
+      }
+
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const elW = containerRef.current?.offsetWidth || 64
+      const elH = containerRef.current?.offsetHeight || 80
+
+      // 从 right/bottom 坐标系转换：right = vw - left - width, bottom = vh - top - height
+      const left = drag.startLeft + dx
+      const top = drag.startTop + dy
+
+      // 限制边界
+      const clampedLeft = Math.max(0, Math.min(left, vw - elW))
+      const clampedTop = Math.max(0, Math.min(top, vh - elH - 56)) // 56 = navbar height
+
+      setPosition({
+        right: Math.round(vw - clampedLeft - elW),
+        bottom: Math.round(vh - clampedTop - elH),
+      })
+    }
+
+    const handleUp = () => {
+      const drag = dragRef.current
+      drag.isDragging = false
+    }
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    window.addEventListener('touchmove', handleMove, { passive: false })
+    window.addEventListener('touchend', handleUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+      window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('touchend', handleUp)
+    }
+  }, [])
+
+  const handlePointerDown = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+
+    const el = containerRef.current
+    const rect = el?.getBoundingClientRect()
+    const left = rect?.left ?? (window.innerWidth - position.right - 64)
+    const top = rect?.top ?? (window.innerHeight - position.bottom - 80)
+
+    dragRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startY: clientY,
+      startLeft: left,
+      startTop: top,
+      moved: false,
+    }
+  }
+
   const handleClick = useCallback(() => {
+    // 如果刚完成拖拽，不触发对话
+    if (dragRef.current.moved) return
+
     let newDialogue
     do {
       newDialogue = DIALOGUES[Math.floor(Math.random() * DIALOGUES.length)]
@@ -37,52 +155,64 @@ export default function Mascot() {
     setTimeout(() => setAnimating(false), 400)
   }, [dialogue])
 
+  // 双击回到默认位置
+  const handleDoubleClick = () => {
+    setPosition({ right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM })
+  }
+
   return (
-    <div className="fixed bottom-24 right-4 z-30 flex flex-col items-end gap-2">
+    <div
+      ref={containerRef}
+      className="fixed z-30 flex flex-col items-end gap-2 select-none"
+      style={{
+        right: position.right,
+        bottom: position.bottom,
+        transition: dragRef.current.isDragging ? 'none' : undefined,
+      }}
+    >
       {/* Speech bubble */}
       {dialogue && (
         <div
           key={dialogue}
-          className={`speech-pop max-w-[220px] bg-white rounded-2xl rounded-br-md px-4 py-3 shadow-lg border border-primary-100 text-sm text-gray-700 leading-relaxed relative`}
+          className="speech-pop max-w-[220px] bg-white rounded-2xl rounded-br-md px-4 py-3 shadow-lg border border-primary-100 text-sm text-gray-700 leading-relaxed relative"
         >
           {dialogue}
-          {/* Bubble tail */}
           <div className="absolute -bottom-2 right-5 w-4 h-4 bg-white border border-primary-100 rotate-45 border-t-0 border-l-0" />
         </div>
       )}
 
-      {/* 小灵儿 Mascot */}
+      {/* 小灵儿 — 可拖拽 */}
       <button
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
         onClick={handleClick}
-        className="relative w-16 h-16 flex items-center justify-center cursor-pointer
-          active:scale-90 transition-transform duration-200 focus:outline-none"
-        title="我是小灵儿，点我聊天～"
+        onDoubleClick={handleDoubleClick}
+        className="relative w-16 h-16 flex items-center justify-center cursor-grab active:cursor-grabbing
+          active:scale-90 transition-transform duration-200 focus:outline-none touch-none"
+        title="按住拖动 · 点击聊天 · 双击归位"
       >
         {/* Soft glow behind */}
         <div className="absolute inset-0 rounded-full gentle-glow" />
 
         {/* Body — blue gradient blob */}
         <div className="mascot-float relative w-14 h-14 rounded-full bg-gradient-to-br from-sky-400 via-primary-400 to-primary-500 shadow-lg shadow-primary-400/30 flex items-center justify-center">
-          {/* Face area — lighter inner */}
           <div className="absolute inset-1.5 rounded-full bg-gradient-to-b from-white/30 to-transparent" />
 
           {/* Eyes */}
           <div className="relative z-10 flex gap-2.5 -mt-0.5">
-            {/* Left eye */}
             <div className="eye-blink w-2 h-2.5 rounded-full bg-gray-800 relative">
               <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 rounded-full bg-white" />
             </div>
-            {/* Right eye */}
             <div className="eye-blink w-2 h-2.5 rounded-full bg-gray-800 relative">
               <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 rounded-full bg-white" />
             </div>
           </div>
 
-          {/* Blush — warm pink */}
+          {/* Blush */}
           <div className="absolute bottom-2 left-1 w-2 h-1 rounded-full bg-pink-300/60" />
           <div className="absolute bottom-2 right-1 w-2 h-1 rounded-full bg-pink-300/60" />
 
-          {/* Tiny mouth — happy curve */}
+          {/* Tiny mouth */}
           <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-1 border-b-2 border-gray-700 rounded-full" />
         </div>
 
@@ -98,19 +228,19 @@ export default function Mascot() {
         </div>
 
         {/* Label */}
-        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-primary-400 whitespace-nowrap">
+        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-primary-400 whitespace-nowrap pointer-events-none">
           小灵儿
         </span>
       </button>
 
       {/* Touch counter */}
       {touches >= 5 && touches < 10 && (
-        <div className="absolute -top-6 -right-1 text-[10px] text-primary-400 animate-bounce">
+        <div className="absolute -top-6 -right-1 text-[10px] text-primary-400 animate-bounce pointer-events-none">
           ♥
         </div>
       )}
       {touches >= 10 && (
-        <div className="absolute -top-6 -right-1 text-[10px] text-pink-400 animate-bounce">
+        <div className="absolute -top-6 -right-1 text-[10px] text-pink-400 animate-bounce pointer-events-none">
           ♥♥
         </div>
       )}
