@@ -132,11 +132,16 @@ export default function Universe() {
       {/* 退出按钮 */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
-        style={{ backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.05)' }}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-semibold transition-all duration-200 active:scale-95"
+        style={{
+          backdropFilter: 'blur(12px)',
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.6), rgba(139,92,246,0.6))',
+          border: '1px solid rgba(255,255,255,0.25)',
+          boxShadow: '0 0 24px rgba(99,102,241,0.5), 0 4px 12px rgba(0,0,0,0.3)',
+        }}
       >
-        <ArrowLeft size={18} />
-        <span className="text-sm">退出</span>
+        <ArrowLeft size={20} />
+        <span className="text-base">退出星球</span>
       </button>
 
       {/* 深空背景 */}
