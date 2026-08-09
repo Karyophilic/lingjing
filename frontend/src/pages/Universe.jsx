@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { localInspirations } from '../api/local'
-import { Plus, Telescope } from 'lucide-react'
+import { Plus, Telescope, ArrowLeft } from 'lucide-react'
 
 // 星球调色板 — 明亮、梦幻的颜色
 const PLANET_COLORS = [
@@ -129,6 +129,16 @@ export default function Universe() {
 
   return (
     <main className="fixed inset-0 overflow-hidden" style={{ zIndex: 1 }}>
+      {/* 退出按钮 */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+        style={{ backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.05)' }}
+      >
+        <ArrowLeft size={18} />
+        <span className="text-sm">退出</span>
+      </button>
+
       {/* 深空背景 */}
       <div className="absolute inset-0"
         style={{
