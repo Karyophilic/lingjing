@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 const DIALOGUES = [
   '嘿！有个灵感在偷偷溜走哦~ 快抓住它！',
@@ -18,10 +18,8 @@ const DIALOGUES = [
   '我好喜欢看你记录灵感的样子！认真的你最棒了 🌟',
 ]
 
-const DRAG_THRESHOLD = 5 // px — 超过此距离视为拖拽而非点击
+const DRAG_THRESHOLD = 5
 const STORAGE_KEY = 'lingjing_mascot_pos'
-const DEFAULT_RIGHT = 16
-const DEFAULT_BOTTOM = 96
 
 function loadPosition() {
   try {
@@ -39,108 +37,98 @@ function savePosition(pos) {
 
 export default function Mascot() {
   const [dialogue, setDialogue] = useState(null)
-  const [animating, setAnimating] = useState(false)
   const [touches, setTouches] = useState(0)
 
-  // 拖拽状态
-  const dragRef = useRef({
-    isDragging: false,
+  // 位置：用 left/top 存储，渲染时转为 right/bottom 定位（更直观的固定定位）
+  const [pos, setPos] = useState(() => {
+    const saved = loadPosition()
+    if (saved) {
+      return {
+        left: saved.left ?? (window.innerWidth - (saved.right ?? 16) - 64),
+        top: saved.top ?? (window.innerHeight - (saved.bottom ?? 96) - 80),
+      }
+    }
+    return { left: window.innerWidth - 80, top: window.innerHeight - 180 }
+  })
+
+  // 拖拽核心 — 全部走 ref，拖拽期间不触发 React 重渲染
+  const drag = useRef({
+    active: false,
     startX: 0,
     startY: 0,
-    startLeft: 0,
-    startTop: 0,
+    originLeft: 0,
+    originTop: 0,
     moved: false,
   })
 
-  // 位置：用 right/bottom 定位（便于初始位置和持久化）
-  const [position, setPosition] = useState(() => {
-    const saved = loadPosition()
-    return saved || { right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM }
-  })
-
-  // 容器 ref 用于获取尺寸做边界限制
   const containerRef = useRef(null)
 
-  // 持久化位置
+  // 每次位置变化持久化
   useEffect(() => {
-    savePosition(position)
-  }, [position])
+    const el = containerRef.current
+    const w = el?.offsetWidth || 64
+    const h = el?.offsetHeight || 80
+    savePosition({
+      left: pos.left,
+      top: pos.top,
+      right: window.innerWidth - pos.left - w,
+      bottom: window.innerHeight - pos.top - h,
+    })
+  }, [pos])
 
-  // 全局移动 & 释放
-  useEffect(() => {
-    const handleMove = (e) => {
-      const drag = dragRef.current
-      if (!drag.isDragging) return
+  // ---- Pointer Events 实现拖拽（统一鼠标 + 触屏）----
+  const handlePointerDown = useCallback((e) => {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-      const dx = clientX - drag.startX
-      const dy = clientY - drag.startY
-
-      if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
-        drag.moved = true
-      }
-
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const elW = containerRef.current?.offsetWidth || 64
-      const elH = containerRef.current?.offsetHeight || 80
-
-      // 从 right/bottom 坐标系转换：right = vw - left - width, bottom = vh - top - height
-      const left = drag.startLeft + dx
-      const top = drag.startTop + dy
-
-      // 限制边界
-      const clampedLeft = Math.max(0, Math.min(left, vw - elW))
-      const clampedTop = Math.max(0, Math.min(top, vh - elH - 56)) // 56 = navbar height
-
-      setPosition({
-        right: Math.round(vw - clampedLeft - elW),
-        bottom: Math.round(vh - clampedTop - elH),
-      })
-    }
-
-    const handleUp = () => {
-      const drag = dragRef.current
-      drag.isDragging = false
-    }
-
-    window.addEventListener('mousemove', handleMove)
-    window.addEventListener('mouseup', handleUp)
-    window.addEventListener('touchmove', handleMove, { passive: false })
-    window.addEventListener('touchend', handleUp)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMove)
-      window.removeEventListener('mouseup', handleUp)
-      window.removeEventListener('touchmove', handleMove)
-      window.removeEventListener('touchend', handleUp)
+    drag.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      originLeft: rect.left,
+      originTop: rect.top,
+      moved: false,
     }
   }, [])
 
-  const handlePointerDown = (e) => {
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+  const handlePointerMove = useCallback((e) => {
+    const d = drag.current
+    if (!d.active) return
 
-    const el = containerRef.current
-    const rect = el?.getBoundingClientRect()
-    const left = rect?.left ?? (window.innerWidth - position.right - 64)
-    const top = rect?.top ?? (window.innerHeight - position.bottom - 80)
+    const dx = e.clientX - d.startX
+    const dy = e.clientY - d.startY
 
-    dragRef.current = {
-      isDragging: true,
-      startX: clientX,
-      startY: clientY,
-      startLeft: left,
-      startTop: top,
-      moved: false,
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      d.moved = true
     }
-  }
 
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const el = containerRef.current
+    const elW = el?.offsetWidth || 64
+    const elH = el?.offsetHeight || 80
+
+    const newLeft = Math.max(0, Math.min(d.originLeft + dx, vw - elW))
+    const newTop = Math.max(0, Math.min(d.originTop + dy, vh - elH - 56))
+
+    setPos({ left: Math.round(newLeft), top: Math.round(newTop) })
+  }, [])
+
+  const handlePointerUp = useCallback((e) => {
+    drag.current.active = false
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (_) { /* ignore */ }
+  }, [])
+
+  // 点击 → 对话（仅当没有拖拽时才触发）
   const handleClick = useCallback(() => {
-    // 如果刚完成拖拽，不触发对话
-    if (dragRef.current.moved) return
+    if (drag.current.moved) {
+      // 重置 moved 标记，让下次点击正常触发
+      drag.current.moved = false
+      return
+    }
 
     let newDialogue
     do {
@@ -148,27 +136,24 @@ export default function Mascot() {
     } while (newDialogue === dialogue && DIALOGUES.length > 1)
 
     setDialogue(newDialogue)
-    setAnimating(true)
     setTouches(t => t + 1)
 
     setTimeout(() => setDialogue(null), 5000)
-    setTimeout(() => setAnimating(false), 400)
   }, [dialogue])
 
-  // 双击回到默认位置
-  const handleDoubleClick = () => {
-    setPosition({ right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM })
-  }
+  // 双击归位
+  const handleDoubleClick = useCallback(() => {
+    setPos({
+      left: window.innerWidth - 80,
+      top: window.innerHeight - 180,
+    })
+  }, [])
 
   return (
     <div
       ref={containerRef}
       className="fixed z-30 flex flex-col items-end gap-2 select-none"
-      style={{
-        right: position.right,
-        bottom: position.bottom,
-        transition: dragRef.current.isDragging ? 'none' : undefined,
-      }}
+      style={{ left: pos.left, top: pos.top }}
     >
       {/* Speech bubble */}
       {dialogue && (
@@ -181,14 +166,19 @@ export default function Mascot() {
         </div>
       )}
 
-      {/* 小灵儿 — 可拖拽 */}
-      <button
-        onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
+      {/* 小灵儿 — 可拖拽（用 div 替代 button，避免浏览器默认行为干扰） */}
+      <div
+        role="button"
+        tabIndex={0}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleClick() }}
         className="relative w-16 h-16 flex items-center justify-center cursor-grab active:cursor-grabbing
-          active:scale-90 transition-transform duration-200 focus:outline-none touch-none"
+          focus:outline-none"
+        style={{ touchAction: 'none' }}
         title="按住拖动 · 点击聊天 · 双击归位"
       >
         {/* Soft glow behind */}
@@ -231,7 +221,7 @@ export default function Mascot() {
         <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-primary-400 whitespace-nowrap pointer-events-none">
           小灵儿
         </span>
-      </button>
+      </div>
 
       {/* Touch counter */}
       {touches >= 5 && touches < 10 && (
