@@ -6,13 +6,15 @@ import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
 import {
   Plus, Search, Edit3, Check, X,
-  TrendingUp, Award, Clock, FileText, Heart, Tag as TagIcon, Layers
+  TrendingUp, Clock, FileText, Heart, Tag as TagIcon, Archive
 } from 'lucide-react'
 
 export default function Profile() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [tab, setTab] = useState('active') // 'active' | 'archived'
   const [inspirations, setInspirations] = useState([])
+  const [archivedInspirations, setArchivedInspirations] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -28,10 +30,16 @@ export default function Profile() {
   const loadData = useCallback(() => {
     setLoading(true)
     try {
-      const inspRes = localInspirations.getMyList(page)
+      const inspRes = tab === 'archived'
+        ? localInspirations.getArchivedList(page)
+        : localInspirations.getMyList(page)
       const statsRes = localAuth.getStats()
       const profileRes = localAuth.getProfile()
-      setInspirations(inspRes.data.items)
+      if (tab === 'archived') {
+        setArchivedInspirations(inspRes.data.items)
+      } else {
+        setInspirations(inspRes.data.items)
+      }
       setStats(statsRes.data)
       setProfile(profileRes.data)
     } catch (err) {
@@ -39,7 +47,7 @@ export default function Profile() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, tab])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -53,17 +61,17 @@ export default function Profile() {
     localAuth.updateProfile({ bio: editBio.trim(), username: editUsername.trim() })
     setEditingProfile(false)
     loadData()
-    window.location.reload() // 刷新以更新全局用户名
+    window.location.reload()
   }
 
+  const currentList = tab === 'archived' ? archivedInspirations : inspirations
   const filtered = search
-    ? inspirations.filter(i =>
+    ? currentList.filter(i =>
         i.title.toLowerCase().includes(search.toLowerCase()) ||
         (i.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()))
       )
-    : inspirations
+    : currentList
 
-  // 时段描述
   const hourLabel = (h) => {
     if (h >= 5 && h < 8) return '清晨 🌅'
     if (h >= 8 && h < 12) return '上午 ☀️'
@@ -79,7 +87,7 @@ export default function Profile() {
       <div className="card mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-100 via-purple-100 to-amber-100 flex items-center justify-center text-3xl shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 via-primary-100 to-blue-200 flex items-center justify-center text-3xl shadow-sm">
               👤
             </div>
             <div>
@@ -135,7 +143,7 @@ export default function Profile() {
 
         {/* 统计数据 */}
         {stats && (
-          <div className="grid grid-cols-4 gap-2 pt-3 border-t border-gray-100">
+          <div className="grid grid-cols-5 gap-2 pt-3 border-t border-gray-100">
             <div className="text-center">
               <div className="text-lg font-bold text-gray-900">{stats.total}</div>
               <div className="text-[10px] text-gray-400">灵感</div>
@@ -152,6 +160,10 @@ export default function Profile() {
               <div className="text-lg font-bold text-spark-500">{stats.pinnedCount}</div>
               <div className="text-[10px] text-gray-400">置顶</div>
             </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-500">{stats.archivedCount || 0}</div>
+              <div className="text-[10px] text-gray-400">存档</div>
+            </div>
           </div>
         )}
       </div>
@@ -160,10 +172,9 @@ export default function Profile() {
       {stats && stats.total > 0 && (
         <div className="card mb-6">
           <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <TrendingUp size={18} className="text-purple-500" /> 创作分析
+            <TrendingUp size={18} className="text-primary-500" /> 创作分析
           </h3>
           <div className="space-y-3">
-            {/* 标签云 */}
             {stats.topTags?.length > 0 && (
               <div>
                 <div className="flex items-center gap-1 mb-2">
@@ -180,7 +191,6 @@ export default function Profile() {
                 </div>
               </div>
             )}
-            {/* 活跃时段 */}
             {stats.bestHour !== null && (
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Clock size={14} className="text-gray-400" />
@@ -191,12 +201,31 @@ export default function Profile() {
         </div>
       )}
 
-      {/* 我的灵感 */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <FileText size={20} className="text-primary-500" />
-          我的灵感
-        </h2>
+      {/* 标签切换：活跃 / 存档 */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => { setTab('active'); setPage(1); setSearch('') }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            tab === 'active'
+              ? 'bg-primary-500 text-white shadow-sm'
+              : 'bg-white text-gray-500 border border-gray-200 hover:border-primary-200'
+          }`}
+        >
+          <FileText size={16} />
+          活跃灵感
+        </button>
+        <button
+          onClick={() => { setTab('archived'); setPage(1); setSearch('') }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            tab === 'archived'
+              ? 'bg-primary-500 text-white shadow-sm'
+              : 'bg-white text-gray-500 border border-gray-200 hover:border-primary-200'
+          }`}
+        >
+          <Archive size={16} />
+          存档
+        </button>
+        <div className="flex-1" />
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm py-2 px-4">
           <Plus size={18} /> 记录
         </button>
@@ -215,9 +244,16 @@ export default function Profile() {
         <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">📝</div>
-          <p className="text-gray-500">{search ? '没有匹配的灵感' : '还没有灵感，记录第一个吧'}</p>
-          {!search && (
+          <div className="text-5xl mb-4">{tab === 'archived' ? '📦' : '📝'}</div>
+          <p className="text-gray-500">
+            {search
+              ? '没有匹配的灵感'
+              : tab === 'archived'
+                ? '还没有存档的灵感'
+                : '还没有灵感，记录第一个吧'
+            }
+          </p>
+          {!search && tab === 'active' && (
             <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex items-center gap-2">
               <Plus size={18} /> 记录第一个灵感
             </button>
@@ -227,13 +263,13 @@ export default function Profile() {
         <>
           <div className="space-y-3">
             {filtered.map(insp => (
-              <InspirationCard key={insp.id} inspiration={insp} showUser={false} onUpdate={loadData} />
+              <InspirationCard key={insp.id} inspiration={insp} showUser={false} onUpdate={loadData} showArchive />
             ))}
           </div>
           <div className="flex justify-center gap-2 mt-6">
             <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="btn-ghost text-sm disabled:opacity-30">上一页</button>
             <span className="flex items-center px-3 text-sm text-gray-500">第 {page} 页</span>
-            <button disabled={inspirations.length < 20} onClick={() => setPage(p => p + 1)} className="btn-ghost text-sm disabled:opacity-30">下一页</button>
+            <button disabled={currentList.length < 20} onClick={() => setPage(p => p + 1)} className="btn-ghost text-sm disabled:opacity-30">下一页</button>
           </div>
         </>
       )}

@@ -13,11 +13,15 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  const login = (username) => {
-    const res = localAuth.login(username)
-    if (res.success) {
-      setUser(res.data.user)
-    }
+  const login = (username, password) => {
+    const res = localAuth.login(username, password)
+    if (res.success) setUser(res.data.user)
+    return res
+  }
+
+  const register = (username, password) => {
+    const res = localAuth.register(username, password)
+    if (res.success) setUser(res.data.user)
     return res
   }
 
@@ -27,7 +31,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

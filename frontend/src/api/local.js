@@ -1,510 +1,348 @@
 // ============================================
 // 本地存储引擎 — 无后端 + 模拟 AI
-// 所有数据存储在 localStorage，AI 功能用本地算法模拟
+// P2: 密码登录、AI对话、种子内容、存档、DB迁移
 // ============================================
 
 const STORAGE_KEY = 'lingjing_data'
+const SEED_VERSION = 2
 
-// --- 初始化/加载 ---
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY)
-  if (raw) return JSON.parse(raw)
-  const fresh = {
-    user: null,
-    profile: {},       // { [userId]: { bio, avatar } }
-    inspirations: [],
-    likes: {},         // { inspirationId: [userId] }
-    comments: {},      // { inspirationId: [{id, userId, username, content, createdAt}] }
-    wakeupChecks: {},  // { userId: lastCheckTime }
+  let db = raw ? JSON.parse(raw) : { _seedVersion: 0 }
+  db = migrateDB(db)
+  if (!db._seedVersion || db._seedVersion < SEED_VERSION) {
+    seedData(db)
+    db._seedVersion = SEED_VERSION
+    saveDB(db)
   }
-  saveDB(fresh)
-  return fresh
+  return db
 }
 
-function saveDB(db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
+function migrateDB(db) {
+  // P1 → P2: single user → users map
+  if (db.user && !db.users) {
+    const u = db.user
+    db.users = { [u.username]: { id: u.id, username: u.username, passwordHash: simpleHash('lingjing'), createdAt: u.createdAt } }
+    db.currentUserId = u.id
+    if (!db.profile) db.profile = {}
+    db.profile[u.id] = db.profile[u.id] || { bio: '', avatar: '' }
+    if (db.inspirations) db.inspirations.forEach(i => { if (!i.user_id) i.user_id = u.id; i.is_ai_generated = false; i.is_archived = false })
+  }
+  if (!db.users) db.users = {}
+  if (!db.currentUserId) db.currentUserId = null
+  if (!db.profile) db.profile = {}
+  if (!db.inspirations) db.inspirations = []
+  if (!db.likes) db.likes = {}
+  if (!db.comments) db.comments = {}
+  if (!db.wakeupChecks) db.wakeupChecks = {}
+  if (!db.aiChats) db.aiChats = {}
+  if (!db.archived) db.archived = {}
+  db.inspirations.forEach(i => {
+    if (i.is_ai_generated === undefined) i.is_ai_generated = false
+    if (i.is_archived === undefined) i.is_archived = false
+    if (i.content_type === undefined) i.content_type = 'text'
+    if (i.image_data === undefined) i.image_data = null
+    if (i.voice_data === undefined) i.voice_data = null
+    if (i.voice_duration === undefined) i.voice_duration = 0
+  })
+  return db
 }
 
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
+function saveDB(db) { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)) }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8) }
+function now() { return new Date().toISOString() }
+function simpleHash(str) { let h = 0; for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0 }; return 'h' + Math.abs(h).toString(36) }
 
-function now() {
-  return new Date().toISOString()
-}
+// ===== AI Users & Seed Inspirations =====
+const AI_USERS = [
+  { username: 'AI灵感助手', bio: '🤖 我是AI灵感助手，每天自动生成创意灵感，供大家参考碰撞' },
+  { username: 'AI创意官', bio: '🎨 专注创意领域，分享设计、艺术、写作灵感' },
+  { username: 'AI造梦师', bio: '🌙 用想象力生成各种有趣的想法，激发你的创造力' },
+]
 
-// ============================================
-// 用户
-// ============================================
-export const localAuth = {
-  register(username) {
-    const db = loadDB()
-    const user = { id: uid(), username, createdAt: now() }
-    db.user = user
-    saveDB(db)
-    return { success: true, data: { user } }
-  },
+const SEED_INSPIRATIONS = [
+  { title: '用AI生成个性化早安播报', content: '每天早上根据天气、日程、心情生成一段30秒的语音播报，像私人电台一样。', tags: ['科技', '创意'], username: 'AI灵感助手' },
+  { title: '碎片化学习App：把知识变成短视频卡片', content: '把一本书的核心知识点拆成15秒短视频卡片，刷视频的过程不知不觉学完一门课。', tags: ['科技', '教育', '创业'], username: 'AI创意官' },
+  { title: '城市里的"发呆亭"——给打工人一个放空的空间', content: '在写字楼密集区设置小型隔音空间，白噪音+柔和灯光+舒服椅子，专门让人发呆10分钟。', tags: ['生活', '创业', '心理'], username: 'AI造梦师' },
+  { title: '悬浮透明图书馆——梦中场景的概念设计', content: '梦见悬浮在空中的透明图书馆，书页会发光。想画下来做成概念设计。', tags: ['设计', '艺术', '创意'], username: 'AI创意官' },
+  { title: '反向社交App：只展示你和别人的不同点', content: '现在的社交软件强调共同兴趣，但如果有App只展示不同点呢？反而引发好奇心。', tags: ['社交', '创业', '哲学'], username: 'AI灵感助手' },
+  { title: '把厨房改造成实验室：分子料理入门', content: '用液氮、胶化剂、泡沫机做菜。不只是吃，更是体验科学的魔法。', tags: ['生活', '创意'], username: 'AI造梦师' },
+  { title: '写给十年后的自己的一封信', content: '写下现在最困扰的问题、最珍惜的人、最怕失去的东西。十年后打开看看。', tags: ['写作', '哲学', '生活'], username: 'AI灵感助手' },
+  { title: '开源一个"情绪日记"Notion模板', content: '记录每天情绪波动+数据可视化，发现自己的情绪规律。', tags: ['心理', '写作', '设计'], username: 'AI创意官' },
+  { title: '建立一个"灵感交换"线下聚会', content: '每人带3个自己放弃的灵感来交换，别人可能会帮你实现。灵感不该烂在备忘录里。', tags: ['社交', '创业', '创意'], username: 'AI造梦师' },
+  { title: '用乐高搭建公司组织架构图', content: '每个部门一个颜色，每个员工一个小人偶，比PPT里的方框好看一万倍。', tags: ['设计', '创意', '商业'], username: 'AI灵感助手' },
+  { title: '做一本只属于自己的杂志', content: '每季度排版印刷一本杂志，全是自己这三个月的好想法、好照片、好文章。', tags: ['写作', '设计', '生活'], username: 'AI创意官' },
+  { title: '开发一个"关键词碰撞器"', content: '随机抽取两个不相关的词（火锅×宇宙），强迫自己想一个结合它们的创意。', tags: ['科技', '创意', '编程'], username: 'AI造梦师' },
+  { title: '把通勤时间变成冥想时间', content: '闭眼深呼吸，用想象力把地铁噪音变成海浪声。每天1小时=365小时/年的修炼。', tags: ['心理', '生活', '哲学'], username: 'AI灵感助手' },
+  { title: '用Git管理你的写作版本', content: '写长文用Git做版本管理，每章节一个branch，改稿就是merge，还能回退。', tags: ['写作', '编程', '创意'], username: 'AI创意官' },
+  { title: '城市声音地图：记录一个城市的声音', content: '每个角落录1分钟环境音标注在地图上。雨天的巷子、早市的热闹、公园的鸟叫。', tags: ['艺术', '音乐', '生活'], username: 'AI造梦师' },
+  { title: '设计一个"反效率"日程表', content: '不是安排好每一分钟，而是故意留出"无事可做"的时间块。灵感往往从无聊中冒出来。', tags: ['哲学', '心理', '生活'], username: 'AI灵感助手' },
+  { title: '把旧手机改造成智能家居中控', content: '淘汰的旧手机刷个轻量系统装Home Assistant，挂墙上当中控屏，成本0元。', tags: ['科技', '编程', '生活'], username: 'AI创意官' },
+  { title: '每个月学一个"无用技能"', content: '口哨吹一首歌、认出10种云的名字、用硬币变魔术。不需要有用，只需要有趣。', tags: ['生活', '学习', '创意'], username: 'AI造梦师' },
+]
 
-  login(username) {
-    const db = loadDB()
-    // 检查是否存在该用户名
-    if (db.user && db.user.username === username) {
-      return { success: true, data: { user: db.user } }
+function seedData(db) {
+  AI_USERS.forEach(u => {
+    if (!db.users[u.username]) {
+      const id = uid()
+      db.users[u.username] = { id, username: u.username, passwordHash: simpleHash('ai_seed'), createdAt: now() }
+      db.profile[id] = { bio: u.bio, avatar: '' }
     }
-    // 新用户
-    const user = { id: uid(), username, createdAt: now() }
-    db.user = user
-    saveDB(db)
-    return { success: true, data: { user } }
-  },
+  })
+  const existingSeeds = db.inspirations.filter(i => i.is_ai_generated).length
+  if (existingSeeds >= 18) return
+  SEED_INSPIRATIONS.forEach((seed, i) => {
+    if (db.inspirations.some(ins => ins.title === seed.title && ins.is_ai_generated)) return
+    const aiUser = db.users[seed.username]
+    if (!aiUser) return
+    const daysAgo = Math.floor(Math.random() * 30)
+    const created = new Date(Date.now() - daysAgo * 86400000 - i * 3600000).toISOString()
+    db.inspirations.unshift({
+      id: uid(), user_id: aiUser.id, username: seed.username,
+      title: seed.title, content: seed.content, content_type: 'text',
+      image_data: null, voice_data: null, voice_duration: 0,
+      tags: seed.tags, is_public: true, is_pinned: i < 3,
+      is_ai_generated: true, is_archived: false,
+      ai_summary: seed.title.slice(0, 30), created_at: created, updated_at: created,
+    })
+  })
+}
 
+// ===== Auth =====
+export const localAuth = {
+  register(username, password) {
+    const db = loadDB()
+    if (db.users[username]) return { success: false, message: '用户名已存在' }
+    const id = uid()
+    db.users[username] = { id, username, passwordHash: simpleHash(password), createdAt: now() }
+    db.profile[id] = { bio: '', avatar: '' }
+    db.currentUserId = id
+    saveDB(db)
+    return { success: true, data: { user: { id, username, createdAt: db.users[username].createdAt } } }
+  },
+  login(username, password) {
+    const db = loadDB()
+    const user = db.users[username]
+    if (!user) return { success: false, message: '用户不存在' }
+    if (user.passwordHash !== simpleHash(password)) return { success: false, message: '密码错误' }
+    db.currentUserId = user.id
+    saveDB(db)
+    return { success: true, data: { user: { id: user.id, username: user.username, createdAt: user.createdAt } } }
+  },
   getCurrentUser() {
     const db = loadDB()
-    return db.user
+    if (!db.currentUserId) return null
+    for (const un of Object.keys(db.users)) {
+      if (db.users[un].id === db.currentUserId) return { id: db.users[un].id, username: un, createdAt: db.users[un].createdAt }
+    }
+    return null
   },
-
-  logout() {
-    const db = loadDB()
-    db.user = null
-    saveDB(db)
-  },
-
+  logout() { const db = loadDB(); db.currentUserId = null; saveDB(db) },
   getProfile() {
-    const db = loadDB()
-    if (!db.user) return { success: false, message: '未登录' }
-    const profile = db.profile[db.user.id] || { bio: '', avatar: '' }
-    return { success: true, data: { ...db.user, ...profile } }
+    const db = loadDB(); const u = this.getCurrentUser()
+    if (!u) return { success: false, message: '未登录' }
+    const p = db.profile[u.id] || { bio: '', avatar: '' }; return { success: true, data: { ...u, ...p } }
   },
-
   updateProfile(data) {
-    const db = loadDB()
-    if (!db.user) return { success: false, message: '未登录' }
-    if (!db.profile[db.user.id]) db.profile[db.user.id] = {}
-    Object.assign(db.profile[db.user.id], data)
-    if (data.username) {
-      db.user.username = data.username
-    }
-    saveDB(db)
-    return { success: true, data: { ...db.user, ...db.profile[db.user.id] } }
+    const db = loadDB(); const u = this.getCurrentUser()
+    if (!u) return { success: false }
+    db.profile[u.id] = Object.assign(db.profile[u.id] || {}, data)
+    if (data.username && data.username !== u.username) { db.users[data.username] = { ...db.users[u.username], username: data.username }; delete db.users[u.username] }
+    saveDB(db); return { success: true, data: { ...u, ...db.profile[u.id] } }
   },
-
   getStats() {
-    const db = loadDB()
-    if (!db.user) return { success: false }
-    const userId = db.user.id
-    const myInspirations = db.inspirations.filter(i => i.user_id === userId)
-    const publicCount = myInspirations.filter(i => i.is_public).length
-    const pinnedCount = myInspirations.filter(i => i.is_pinned).length
-
-    // 标签统计
-    const tagCounts = {}
-    myInspirations.forEach(i => {
-      (i.tags || []).forEach(t => {
-        tagCounts[t] = (tagCounts[t] || 0) + 1
-      })
-    })
-    const topTags = Object.entries(tagCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([tag, count]) => ({ tag, count }))
-
-    // 收到的赞
-    let totalLikes = 0
-    myInspirations.forEach(i => {
-      totalLikes += (db.likes[i.id] || []).length
-    })
-
-    // 创作时间段分析
-    const hourCounts = {}
-    myInspirations.forEach(i => {
-      const hour = new Date(i.created_at).getHours()
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1
-    })
-    const bestHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]
-
-    return {
-      success: true,
-      data: {
-        total: myInspirations.length,
-        publicCount,
-        pinnedCount,
-        totalLikes,
-        totalComments: Object.values(db.comments).flat().filter(c => c.user_id === userId).length,
-        topTags,
-        bestHour: bestHour ? parseInt(bestHour[0]) : null,
-        bestHourCount: bestHour ? bestHour[1] : 0,
-        joinedAt: db.user.createdAt,
-      },
-    }
+    const db = loadDB(); const u = this.getCurrentUser()
+    if (!u) return { success: false }
+    const archivedIds = db.archived[u.id] || []
+    const mine = db.inspirations.filter(i => i.user_id === u.id && !archivedIds.includes(i.id))
+    const tc = {}; mine.forEach(i => (i.tags || []).forEach(t => { tc[t] = (tc[t] || 0) + 1 }))
+    let likes = 0; mine.forEach(i => { likes += (db.likes[i.id] || []).length })
+    const hc = {}; mine.forEach(i => { const h = new Date(i.created_at).getHours(); hc[h] = (hc[h] || 0) + 1 })
+    const best = Object.entries(hc).sort((a, b) => b[1] - a[1])[0]
+    return { success: true, data: { total: mine.length, publicCount: mine.filter(i => i.is_public).length, pinnedCount: mine.filter(i => i.is_pinned).length, archivedCount: (db.archived[u.id] || []).length, totalLikes: likes, topTags: Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count]) => ({ tag, count })), bestHour: best ? parseInt(best[0]) : null, joinedAt: u.createdAt } }
   },
 }
 
-// ============================================
-// 模拟 AI：关键词 → 标签 + 摘要
-// ============================================
+// ===== AI Tagging =====
 const TAG_RULES = [
-  { keywords: ['代码','编程','算法','前端','后端','ai','api','app','软件','程序','开发','python','react','js','node'], tags: ['科技','编程'] },
-  { keywords: ['设计','ui','ux','界面','颜色','配色','排版','海报','logo','图标','插画','动画'], tags: ['设计','创意'] },
-  { keywords: ['写作','小说','故事','文章','诗','文案','剧本','日记','散文','读书','阅读'], tags: ['写作','文学'] },
-  { keywords: ['音乐','歌','曲','吉他','钢琴','唱歌','乐队','编曲','旋律','节奏','和弦'], tags: ['音乐','艺术'] },
+  { keywords: ['代码','编程','算法','前端','后端','ai','api','app','软件','程序','开发','python','react','js','node','git'], tags: ['科技','编程'] },
+  { keywords: ['设计','ui','ux','界面','颜色','配色','排版','海报','logo','图标','插画','动画','绘图','画'], tags: ['设计','创意'] },
+  { keywords: ['写作','小说','故事','文章','诗','文案','剧本','日记','散文','读书','阅读','写','字'], tags: ['写作','文学'] },
+  { keywords: ['音乐','歌','曲','吉他','钢琴','唱歌','乐队','编曲','旋律','节奏','和弦','声音','录音'], tags: ['音乐','艺术'] },
   { keywords: ['画画','绘画','素描','水彩','油画','涂鸦','漫画'], tags: ['艺术','绘画'] },
-  { keywords: ['创业','商业','赚钱','营销','品牌','产品','市场','用户','融资','电商'], tags: ['商业','创业'] },
-  { keywords: ['生活','日常','美食','旅行','健身','穿搭','家居','宠物','植物','咖啡'], tags: ['生活'] },
-  { keywords: ['学习','考试','考研','英语','读书','笔记','复习','记忆','课程','教育'], tags: ['学习','教育'] },
+  { keywords: ['创业','商业','赚钱','营销','品牌','产品','市场','用户','融资','电商','公司'], tags: ['商业','创业'] },
+  { keywords: ['生活','日常','美食','旅行','健身','穿搭','家居','宠物','植物','咖啡','厨房','通勤','城市'], tags: ['生活'] },
+  { keywords: ['学习','考试','考研','英语','读书','笔记','复习','记忆','课程','教育','技能','知识'], tags: ['学习','教育'] },
   { keywords: ['游戏','电竞','手游','端游','关卡','角色','玩法','机制'], tags: ['游戏','娱乐'] },
-  { keywords: ['电影','视频','vlog','剪辑','拍摄','镜头','导演','剧情'], tags: ['影视','创作'] },
-  { keywords: ['社交','社区','朋友','聊天','匹配','约会','聚会'], tags: ['社交'] },
-  { keywords: ['环保','公益','气候','能源','可持续','碳中和'], tags: ['环保','公益'] },
-  { keywords: ['哲学','思考','人生','意义','存在','自由','真理'], tags: ['哲学','思考'] },
-  { keywords: ['心理','情绪','焦虑','抑郁','疗愈','冥想','正念'], tags: ['心理','健康'] },
+  { keywords: ['电影','视频','vlog','剪辑','拍摄','镜头','导演','剧情','短视频'], tags: ['影视','创作'] },
+  { keywords: ['社交','社区','朋友','聊天','匹配','约会','聚会','交流'], tags: ['社交'] },
+  { keywords: ['哲学','思考','人生','意义','存在','自由','真理','冥想','无聊'], tags: ['哲学','思考'] },
+  { keywords: ['心理','情绪','焦虑','抑郁','疗愈','正念','发呆','心情','日记'], tags: ['心理','健康'] },
 ]
 
 function simulateAITag(title, content) {
-  const text = (title + ' ' + content).toLowerCase()
-  const matchedTags = new Set()
-
-  for (const rule of TAG_RULES) {
-    for (const kw of rule.keywords) {
-      if (text.includes(kw)) {
-        rule.tags.forEach(t => matchedTags.add(t))
-        break
-      }
-    }
-  }
-
-  if (matchedTags.size === 0) {
-    matchedTags.add('灵感')
-  }
-
-  return {
-    tags: Array.from(matchedTags).slice(0, 5),
-    summary: title.length > 30 ? title.slice(0, 30) + '...' : title,
-  }
+  const text = (title + ' ' + content).toLowerCase(); const matched = new Set()
+  for (const r of TAG_RULES) { for (const kw of r.keywords) { if (text.includes(kw)) { r.tags.forEach(t => matched.add(t)); break } } }
+  if (matched.size === 0) matched.add('灵感')
+  return { tags: Array.from(matched).slice(0, 5), summary: title.length > 30 ? title.slice(0, 30) + '...' : title }
 }
 
-// 模拟 AI 唤醒消息
-const WAKEUP_TEMPLATES = [
-  '💡 还记得这个想法吗？说不定它值得你再想一想。',
-  '⏰ 几天前你记下了一个灵感，要不要回来看看？',
-  '🌟 有个被你遗忘的念头在发光，快回来看看吧！',
-  '🧠 AI 提醒你：这个灵感可能比你想象中更有价值。',
-  '🔔 叮！你的灵感库存里有个宝贝等你重新发现。',
+// ===== AI Chat =====
+const CHAT_INTENTS = [
+  { keywords: ['无聊','没灵感','不知道','想不出','空白','卡住','没有想法'], responses: [
+    '试试换个环境——去没去过的咖啡馆坐坐，或绕一条从没走过的路散步。灵感不太会在盯着屏幕时出现，它更喜欢在你分心时悄悄冒出来。',
+    '来玩个游戏：随便翻本书到第42页第5行第一个词，把它作为你下一个创意的起点。不管多离谱，先顺着想5分钟。',
+    '灵感不是等来的，是"撞"出来的。试试把两个完全无关的东西强行组合：比如"火锅×区块链"或"瑜伽×养猫"。',
+  ]},
+  { keywords: ['回忆','忘记','想不起来','遗忘','记不住','忘了什么'], responses: [
+    '闭上眼睛，想一下昨天洗澡时脑子里闪过的那个念头——那个"先不管它"的想法。它还在，只是需要你往回走两步。',
+    '试试"倒放"你的一天：从睡前开始往回放，看到什么画面就停下来。回忆有时不是往前找，是往后退。',
+    '翻翻相册找到最近一张随手拍的照片——当时你在想什么？那条线索可能还连着一段没被记录的灵感。',
+  ]},
+  { keywords: ['灵感','想法','点子','创意','念头'], responses: [
+    '好想法往往是你"偷"来的——不是抄袭，而是把别人的思路嫁接到自己的土壤上。最近有没有看到让你"哇"的东西？拆开看看里面是什么。',
+    '好灵感像种子：今天埋下去，过几天浇水，过几周发芽。别急着让它今天就完美，先记下来让时间发酵。',
+    '试试这个框架：我要为__(谁)，解决__(什么问题)，用__(什么方式)，让他们感到__(什么感觉)。填完4个空，灵感就有了骨架。',
+  ]},
+  { keywords: ['焦虑','压力','放弃','不行','做不好','失败','很难'], responses: [
+    '每个创作者都有"我的想法好垃圾"的时刻。这不是你，是创作的自然阶段。先写下来再说，质量是改出来的。',
+    '给自己"烂作品配额"：允许自己每月做出3个烂东西。当不再害怕做烂东西，灵感反而来得更快。',
+    '最成功的人不是灵感最多的人，而是把灵感坚持做完的人。你不需要爆炸性创意，只需要把这个做完。',
+  ]},
+  { keywords: ['帮助','帮我','建议','怎么办','怎么开始','怎么做'], responses: [
+    '先做一件事：把脑子里所有想法倒出来，不要整理不要判断好坏，像倒垃圾一样全倒出来。然后我们再一起挑。',
+    '从最小的一步开始。不是"做App"而是"打开备忘录写三行字"。不是"学画画"而是"在纸上画一个圆"。先动起来。',
+    '试试反向思考：你不想做什么？讨厌什么？有时候知道自己不要什么，比知道要什么更容易找到方向。',
+  ]},
 ]
 
-function simulateWakeupMessage(inspiration) {
-  const idx = Math.floor(Math.random() * WAKEUP_TEMPLATES.length)
-  return WAKEUP_TEMPLATES[idx]
+function simulateChatResponse(userMessage, inspirationContext) {
+  const msg = userMessage.toLowerCase(); let best = null
+  for (const intent of CHAT_INTENTS) { for (const kw of intent.keywords) { if (msg.includes(kw)) { best = intent; break } } if (best) break }
+  const pool = best ? best.responses : ['有意思！展开说说？', '这个想法不错！放大10倍会怎样？', '有趣。想过这个想法的"反面"吗？', '你正在酝酿一些东西。别急着下结论。', '灵感像猫，越追越跑。不如先做点别的。']
+  let prefix = ''; if (inspirationContext?.length > 0 && Math.random() > 0.5) { const ri = inspirationContext[Math.floor(Math.random() * inspirationContext.length)]; prefix = `💡 说起来，你记录过"${ri.title}"——这个想法和现在的你可能已经不一样了。\n\n` }
+  return prefix + pool[Math.floor(Math.random() * pool.length)]
 }
 
-// 模拟灵感关联
-function simulateRelated(inspirations, current) {
-  return inspirations
-    .filter(i => i.id !== current.id)
-    .filter(i => {
-      const commonTags = (i.tags || []).filter(t => (current.tags || []).includes(t))
-      return commonTags.length > 0
-    })
-    .slice(0, 3)
-    .map(i => ({
-      inspiration_id: i.id,
-      title: i.title,
-      connection: `你们有共同的关键词：${i.tags.filter(t => current.tags.includes(t)).slice(0,2).join('、')}`,
-      created_at: i.created_at,
-    }))
+export const localAI = {
+  getChatHistory() { const db = loadDB(); const u = localAuth.getCurrentUser(); return u ? (db.aiChats[u.id] || []) : [] },
+  sendChatMessage(content) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: false }
+    if (!db.aiChats[u.id]) db.aiChats[u.id] = []
+    const userMsg = { role: 'user', content, time: now() }; db.aiChats[u.id].push(userMsg)
+    const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
+    const aiContent = simulateChatResponse(content, myInsp.slice(0, 5))
+    const aiMsg = { role: 'assistant', content: aiContent, time: now() }; db.aiChats[u.id].push(aiMsg)
+    if (db.aiChats[u.id].length > 200) db.aiChats[u.id] = db.aiChats[u.id].slice(-100)
+    saveDB(db); return { success: true, data: { userMsg, aiMsg } }
+  },
+  clearChatHistory() { const db = loadDB(); const u = localAuth.getCurrentUser(); if (!u) return { success: false }; db.aiChats[u.id] = []; saveDB(db); return { success: true } },
+  generateSuggestion() {
+    const prompts = [
+      { title: '今天看到的最触动你的东西', hint: '路上的一棵树、手机里的一句话、或陌生人的一个微笑' },
+      { title: '如果钱和时间都不是问题，你最想做什么', hint: '不用考虑现实性，让想象力飞' },
+      { title: '你最近反复出现的同一个念头', hint: '那个总在不经意间冒出来的想法，可能是信号' },
+      { title: '什么事情让你不爽了很久', hint: '不爽的背后往往藏着一个值得解决的问题' },
+      { title: '你最想和10年前的自己说什么', hint: '踩过的坑、学会的道理、后悔没做的事' },
+      { title: '如果只能教别人一件事，你会教什么', hint: '每个人都有自己的独门绝技' },
+    ]; return prompts[Math.floor(Math.random() * prompts.length)]
+  },
+  getWakeup() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: true, data: { items: [] } }
+    const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    const lastCheck = db.wakeupChecks[u.id]
+    const candidates = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived && new Date(i.created_at) < new Date(threeDaysAgo)).filter(i => !lastCheck || new Date(i.created_at) > new Date(lastCheck)).slice(0, 5)
+    db.wakeupChecks[u.id] = now(); saveDB(db)
+    const msgs = ['💡 还记得这个想法吗？','⏰ 几天前记下的灵感，回来看看？','🌟 被遗忘的念头在发光','🧠 这个灵感可能比想象中更有价值','🔔 灵感库存里有宝贝等你重新发现']
+    return { success: true, data: { items: candidates.map(i => ({ reminder_id: uid(), inspiration_id: i.id, title: i.title, message: msgs[Math.floor(Math.random() * 5)], remind_at: now() })) } }
+  },
+  getRelated(inspirationId) {
+    const db = loadDB(); const cur = db.inspirations.find(i => i.id === inspirationId)
+    if (!cur) return { success: true, data: { items: [] } }
+    return { success: true, data: { items: db.inspirations.filter(i => i.id !== cur.id && (i.tags || []).some(t => (cur.tags || []).includes(t))).slice(0, 3).map(i => ({ inspiration_id: i.id, title: i.title, connection: `共享标签：${i.tags.filter(t => cur.tags.includes(t)).slice(0, 2).join('、')}`, created_at: i.created_at })) } }
+  },
+  getMatches() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: true, data: { items: [], totalCount: 0 } }
+    const mine = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
+    if (mine.length < 2) return { success: true, data: { items: [], totalCount: mine.length } }
+    const pairs = []; for (let i = 0; i < mine.length; i++) for (let j = i + 1; j < mine.length; j++) { const a = mine[i], b = mine[j]; const ta = new Set(a.tags || []), tb = new Set(b.tags || []); const c = [...ta].filter(t => tb.has(t)); const un = new Set([...ta, ...tb]); const s = Math.round((un.size > 0 ? c.length / un.size : 0) * 100); if (s > 0) pairs.push({ pair_id: `${a.id}_${b.id}`, inspiration_a: { id: a.id, title: a.title, tags: a.tags, created_at: a.created_at }, inspiration_b: { id: b.id, title: b.title, tags: b.tags, created_at: b.created_at }, match_score: s, common_tags: c, match_reason: c.length > 0 ? `共享标签：${c.slice(0, 3).join('、')}` : '微妙关联' }) }
+    pairs.sort((a, b) => b.match_score - a.match_score)
+    const tc = {}; mine.forEach(i => (i.tags || []).forEach(t => { tc[t] = (tc[t] || 0) + 1 }))
+    return { success: true, data: { items: pairs.slice(0, 10), totalCount: mine.length, dominantTags: Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t), mode: 'single_player' } }
+  },
 }
 
-// ============================================
-// 灵感 CRUD
-// ============================================
+// ===== Inspirations CRUD =====
 export const localInspirations = {
   create(data) {
-    const db = loadDB()
+    const db = loadDB(); const u = localAuth.getCurrentUser()
     const ai = simulateAITag(data.title, data.content)
-    const inspiration = {
-      id: uid(),
-      user_id: db.user?.id,
-      username: db.user?.username || '匿名',
-      title: data.title,
-      content: data.content || '',
-      content_type: data.content_type || 'text',
-      image_data: data.image_data || null,   // base64 图片
-      voice_data: data.voice_data || null,   // base64 音频
-      voice_duration: data.voice_duration || 0,
-      tags: ai.tags,
-      is_public: data.is_public || false,
-      is_pinned: data.is_pinned || false,
-      ai_summary: ai.summary,
-      created_at: now(),
-      updated_at: now(),
-    }
-    db.inspirations.unshift(inspiration)
-    saveDB(db)
-    return { success: true, data: { inspiration, tags: ai.tags, ai_summary: ai.summary } }
+    const insp = { id: uid(), user_id: u?.id, username: u?.username || '匿名', title: data.title, content: data.content || '', content_type: data.content_type || 'text', image_data: data.image_data || null, voice_data: data.voice_data || null, voice_duration: data.voice_duration || 0, tags: ai.tags, is_public: data.is_public || false, is_pinned: false, is_ai_generated: false, is_archived: false, ai_summary: ai.summary, created_at: now(), updated_at: now() }
+    db.inspirations.unshift(insp); saveDB(db)
+    return { success: true, data: { inspiration: insp, tags: ai.tags, ai_summary: ai.summary } }
   },
-
   getMyList(page = 1, limit = 20) {
-    const db = loadDB()
-    const userId = db.user?.id
-    let items = db.inspirations
-      .filter(i => i.user_id === userId)
-      .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || new Date(b.created_at) - new Date(a.created_at))
-
-    const offset = (page - 1) * limit
-    items = items.slice(offset, offset + limit)
-
-    items = items.map(i => ({
-      ...i,
-      username: i.username || db.user?.username || '',
-      like_count: (db.likes[i.id] || []).length,
-      comment_count: (db.comments[i.id] || []).length,
-    }))
-
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: true, data: { items: [], page, limit } }
+    const archivedIds = db.archived[u.id] || []
+    let items = db.inspirations.filter(i => i.user_id === u.id && !archivedIds.includes(i.id)).sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || new Date(b.created_at) - new Date(a.created_at))
+    const offset = (page - 1) * limit; items = items.slice(offset, offset + limit).map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
     return { success: true, data: { items, page, limit } }
   },
-
-  getDetail(id) {
-    const db = loadDB()
-    const i = db.inspirations.find(x => x.id === id)
-    if (!i) return { success: false, message: '不存在' }
-    return {
-      success: true,
-      data: {
-        ...i,
-        username: i.username || '',
-        like_count: (db.likes[i.id] || []).length,
-        comment_count: (db.comments[i.id] || []).length,
-      },
-    }
+  getArchivedList(page = 1, limit = 20) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: true, data: { items: [], page, limit } }
+    const archivedIds = db.archived[u.id] || []
+    let items = db.inspirations.filter(i => i.user_id === u.id && archivedIds.includes(i.id)).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    const offset = (page - 1) * limit; items = items.slice(offset, offset + limit).map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
+    return { success: true, data: { items, page, limit } }
   },
-
+  getDetail(id) { const db = loadDB(); const i = db.inspirations.find(x => x.id === id); if (!i) return { success: false, message: '不存在' }; return { success: true, data: { ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length } } },
   update(id, data) {
-    const db = loadDB()
-    const idx = db.inspirations.findIndex(x => x.id === id)
+    const db = loadDB(); const idx = db.inspirations.findIndex(x => x.id === id)
     if (idx === -1) return { success: false, message: '不存在' }
-
-    // 如果修改了标题或内容，重新 AI 打标
-    if (data.title || data.content) {
-      const insp = db.inspirations[idx]
-      const ai = simulateAITag(
-        data.title || insp.title,
-        data.content !== undefined ? data.content : insp.content
-      )
-      data.tags = ai.tags
-      data.ai_summary = ai.summary
-    }
-
-    Object.assign(db.inspirations[idx], data, { updated_at: now() })
-    saveDB(db)
-    return { success: true, data: db.inspirations[idx] }
+    if (data.title || data.content) { const insp = db.inspirations[idx]; const ai = simulateAITag(data.title || insp.title, data.content !== undefined ? data.content : insp.content); data.tags = ai.tags; data.ai_summary = ai.summary }
+    Object.assign(db.inspirations[idx], data, { updated_at: now() }); saveDB(db); return { success: true, data: db.inspirations[idx] }
   },
-
-  togglePin(id) {
-    const db = loadDB()
-    const idx = db.inspirations.findIndex(x => x.id === id)
-    if (idx === -1) return { success: false, message: '不存在' }
-    db.inspirations[idx].is_pinned = !db.inspirations[idx].is_pinned
-    db.inspirations[idx].updated_at = now()
-    saveDB(db)
-    return { success: true, data: db.inspirations[idx] }
+  togglePin(id) { const db = loadDB(); const idx = db.inspirations.findIndex(x => x.id === id); if (idx === -1) return { success: false }; db.inspirations[idx].is_pinned = !db.inspirations[idx].is_pinned; db.inspirations[idx].updated_at = now(); saveDB(db); return { success: true, data: db.inspirations[idx] } },
+  toggleArchive(id) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: false }; const insp = db.inspirations.find(x => x.id === id)
+    if (!insp) return { success: false }
+    if (!db.archived[u.id]) db.archived[u.id] = []
+    const ai = db.archived[u.id].indexOf(id)
+    if (ai > -1) { db.archived[u.id].splice(ai, 1); insp.is_archived = false; saveDB(db); return { success: true, message: '已取消存档', archived: false } }
+    else { db.archived[u.id].push(id); insp.is_archived = true; saveDB(db); return { success: true, message: '已存档', archived: true } }
   },
-
-  delete(id) {
-    const db = loadDB()
-    db.inspirations = db.inspirations.filter(x => x.id !== id)
-    // 清理关联的点赞和评论
-    delete db.likes[id]
-    delete db.comments[id]
-    saveDB(db)
-    return { success: true }
-  },
-
+  delete(id) { const db = loadDB(); db.inspirations = db.inspirations.filter(x => x.id !== id); delete db.likes[id]; delete db.comments[id]; saveDB(db); return { success: true } },
   getSquare(tag, page = 1, limit = 20) {
-    const db = loadDB()
-    let items = db.inspirations
-      .filter(i => i.is_public)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-    if (tag) {
-      items = items.filter(i => (i.tags || []).includes(tag))
-    }
-
-    const offset = (page - 1) * limit
-    items = items.slice(offset, offset + limit)
-
-    items = items.map(i => ({
-      ...i,
-      username: i.username || '匿名',
-      like_count: (db.likes[i.id] || []).length,
-      comment_count: (db.comments[i.id] || []).length,
-    }))
-
+    const db = loadDB(); const archivedIds = Object.values(db.archived || {}).flat()
+    let items = db.inspirations.filter(i => i.is_public && !i.is_archived && !archivedIds.includes(i.id)).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    if (tag) items = items.filter(i => (i.tags || []).includes(tag))
+    const offset = (page - 1) * limit; items = items.slice(offset, offset + limit).map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
     return { success: true, data: { items, page, limit } }
   },
-
   search(query) {
-    const db = loadDB()
-    const q = query.toLowerCase()
-    let items = db.inspirations
-      .filter(i => i.is_public)
-      .filter(i =>
-        i.title.toLowerCase().includes(q) ||
-        i.content.toLowerCase().includes(q) ||
-        (i.tags || []).some(t => t.toLowerCase().includes(q))
-      )
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-    items = items.map(i => ({
-      ...i,
-      username: i.username || '匿名',
-      like_count: (db.likes[i.id] || []).length,
-      comment_count: (db.comments[i.id] || []).length,
-    }))
-
+    const db = loadDB(); const q = query.toLowerCase(); const archivedIds = Object.values(db.archived || {}).flat()
+    let items = db.inspirations.filter(i => i.is_public && !i.is_archived && !archivedIds.includes(i.id)).filter(i => i.title.toLowerCase().includes(q) || i.content.toLowerCase().includes(q) || (i.tags || []).some(t => t.toLowerCase().includes(q))).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    items = items.map(i => ({ ...i, like_count: (db.likes[i.id] || []).length, comment_count: (db.comments[i.id] || []).length }))
     return { success: true, data: { items } }
   },
-
-  // 点赞
   like(inspirationId) {
-    const db = loadDB()
+    const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!db.likes[inspirationId]) db.likes[inspirationId] = []
-    const userId = db.user?.id
-    const idx = db.likes[inspirationId].indexOf(userId)
-    if (idx > -1) {
-      db.likes[inspirationId].splice(idx, 1)
-      saveDB(db)
-      return { success: true, message: '已取消点赞' }
-    } else {
-      db.likes[inspirationId].push(userId)
-      saveDB(db)
-      return { success: true, message: '已点赞' }
-    }
+    const idx = db.likes[inspirationId].indexOf(u.id)
+    if (idx > -1) { db.likes[inspirationId].splice(idx, 1); saveDB(db); return { success: true, message: '已取消点赞' } }
+    else { db.likes[inspirationId].push(u.id); saveDB(db); return { success: true, message: '已点赞' } }
   },
-
-  // 评论
-  getComments(inspirationId) {
-    const db = loadDB()
-    return { success: true, data: { items: db.comments[inspirationId] || [] } }
-  },
-
+  getComments(inspirationId) { const db = loadDB(); return { success: true, data: { items: db.comments[inspirationId] || [] } } },
   createComment(inspirationId, content) {
-    const db = loadDB()
+    const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!db.comments[inspirationId]) db.comments[inspirationId] = []
-    const comment = {
-      id: uid(),
-      user_id: db.user?.id,
-      username: db.user?.username || '',
-      inspiration_id: inspirationId,
-      content,
-      created_at: now(),
-    }
-    db.comments[inspirationId].push(comment)
-    saveDB(db)
-    return { success: true, data: comment }
-  },
-}
-
-// ============================================
-// AI 功能（本地模拟）
-// ============================================
-export const localAI = {
-  getWakeup() {
-    const db = loadDB()
-    const userId = db.user?.id
-
-    const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
-    const lastCheck = db.wakeupChecks[userId]
-
-    const candidates = db.inspirations
-      .filter(i => i.user_id === userId)
-      .filter(i => new Date(i.created_at) < new Date(threeDaysAgo))
-      .filter(i => {
-        if (!lastCheck) return true
-        return new Date(i.created_at) > new Date(lastCheck)
-      })
-      .slice(0, 5)
-
-    db.wakeupChecks[userId] = now()
-    saveDB(db)
-
-    const items = candidates.map(i => ({
-      reminder_id: uid(),
-      inspiration_id: i.id,
-      title: i.title,
-      message: simulateWakeupMessage(i),
-      remind_at: now(),
-    }))
-
-    return { success: true, data: { items } }
-  },
-
-  getRelated(inspirationId) {
-    const db = loadDB()
-    const current = db.inspirations.find(i => i.id === inspirationId)
-    if (!current) return { success: true, data: { items: [] } }
-
-    const related = simulateRelated(db.inspirations, current)
-    return { success: true, data: { items: related } }
-  },
-
-  getMatches() {
-    const db = loadDB()
-    const userId = db.user?.id
-    const myInspirations = db.inspirations.filter(i => i.user_id === userId)
-
-    if (myInspirations.length < 2) {
-      return { success: true, data: { items: [], totalCount: myInspirations.length } }
-    }
-
-    // 单机模式：交叉匹配自己的灵感，找出标签重合度高的"灵感对"
-    const pairs = []
-    for (let i = 0; i < myInspirations.length; i++) {
-      for (let j = i + 1; j < myInspirations.length; j++) {
-        const a = myInspirations[i]
-        const b = myInspirations[j]
-        const tagsA = new Set(a.tags || [])
-        const tagsB = new Set(b.tags || [])
-        const common = [...tagsA].filter(t => tagsB.has(t))
-        const union = new Set([...tagsA, ...tagsB])
-        const jaccard = union.size > 0 ? common.length / union.size : 0
-        const score = Math.round(jaccard * 100)
-
-        if (score > 0) {
-          pairs.push({
-            pair_id: `${a.id}_${b.id}`,
-            inspiration_a: { id: a.id, title: a.title, tags: a.tags, created_at: a.created_at },
-            inspiration_b: { id: b.id, title: b.title, tags: b.tags, created_at: b.created_at },
-            match_score: score,
-            common_tags: common,
-            match_reason: common.length > 0
-              ? `共享标签：${common.slice(0, 3).join('、')}`
-              : '你们的灵感有微妙的关联',
-          })
-        }
-      }
-    }
-
-    pairs.sort((a, b) => b.match_score - a.match_score)
-
-    // 标签分布分析
-    const tagCounts = {}
-    myInspirations.forEach(i => {
-      (i.tags || []).forEach(t => {
-        tagCounts[t] = (tagCounts[t] || 0) + 1
-      })
-    })
-    const dominantTags = Object.entries(tagCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([tag]) => tag)
-
-    return {
-      success: true,
-      data: {
-        items: pairs.slice(0, 10),
-        totalCount: myInspirations.length,
-        dominantTags,
-        mode: 'single_player',
-      },
-    }
+    const comment = { id: uid(), user_id: u?.id, username: u?.username || '', inspiration_id: inspirationId, content, created_at: now() }
+    db.comments[inspirationId].push(comment); saveDB(db); return { success: true, data: comment }
   },
 }

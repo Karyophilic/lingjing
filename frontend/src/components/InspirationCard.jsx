@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { Heart, MessageCircle, Pin, PinOff, Image as ImageIcon, Mic } from 'lucide-react'
+import { Heart, MessageCircle, Pin, PinOff, Image as ImageIcon, Mic, Bot, Archive, ArchiveRestore } from 'lucide-react'
 import { localInspirations } from '../api/local'
 
-export default function InspirationCard({ inspiration, onLike, showUser = true, onUpdate }) {
+export default function InspirationCard({ inspiration, onLike, showUser = true, onUpdate, showArchive = false }) {
   const {
     id, title, content, tags, ai_summary, content_type,
     image_data, voice_data, voice_duration,
     created_at, username, like_count, comment_count, is_pinned,
+    is_ai_generated, is_archived,
   } = inspiration
 
   const timeAgo = (dateStr) => {
@@ -28,8 +29,22 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
     onUpdate?.()
   }
 
+  const handleArchive = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const res = localInspirations.toggleArchive(id)
+    onUpdate?.()
+  }
+
   return (
     <Link to={`/inspiration/${id}`} className="card block group relative">
+      {/* AI 生成标识 */}
+      {is_ai_generated && (
+        <div className="flex items-center gap-1 text-xs text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full w-fit mb-2">
+          <Bot size={12} /> AI生成
+        </div>
+      )}
+
       {/* 置顶标识 */}
       {is_pinned && (
         <div className="flex items-center gap-1 text-spark-500 text-xs mb-2">
@@ -37,28 +52,62 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
         </div>
       )}
 
-      {/* 置顶按钮 */}
-      <button
-        onClick={handlePin}
-        className={`absolute top-4 right-4 p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${
-          is_pinned
-            ? 'bg-spark-50 text-spark-500 opacity-100'
-            : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
-        }`}
-        title={is_pinned ? '取消置顶' : '置顶'}
-      >
-        {is_pinned ? <PinOff size={14} /> : <Pin size={14} />}
-      </button>
+      {/* 操作按钮组 */}
+      <div className="absolute top-4 right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+        {showArchive && (
+          <button
+            onClick={handleArchive}
+            className={`p-1.5 rounded-lg transition-all ${
+              is_archived
+                ? 'bg-primary-50 text-primary-500 opacity-100'
+                : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+            }`}
+            title={is_archived ? '取消存档' : '存档'}
+          >
+            {is_archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          </button>
+        )}
+        <button
+          onClick={handlePin}
+          className={`p-1.5 rounded-lg transition-all ${
+            is_pinned
+              ? 'bg-spark-50 text-spark-500'
+              : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+          } ${is_pinned ? 'opacity-100' : ''}`}
+          title={is_pinned ? '取消置顶' : '置顶'}
+        >
+          {is_pinned ? <PinOff size={14} /> : <Pin size={14} />}
+        </button>
+      </div>
+
+      {/* 已置顶时不显示顶部按钮（已在上面显示） */}
+      {is_pinned && (
+        <div className="absolute top-4 right-4 flex gap-0.5">
+          {showArchive && (
+            <button
+              onClick={handleArchive}
+              className={`p-1.5 rounded-lg transition-all ${
+                is_archived
+                  ? 'bg-primary-50 text-primary-500'
+                  : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+              }`}
+              title={is_archived ? '取消存档' : '存档'}
+            >
+              {is_archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 内容类型标识 */}
       <div className="flex items-center gap-2 mb-2">
         {content_type === 'image' && (
-          <span className="flex items-center gap-1 text-xs text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-xs text-sky-500 bg-sky-50 px-2 py-0.5 rounded-full">
             <ImageIcon size={12} /> 图片
           </span>
         )}
         {content_type === 'voice' && (
-          <span className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-xs text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
             <Mic size={12} /> 语音 {voice_duration > 0 && `${Math.floor(voice_duration / 60)}'${(voice_duration % 60).toString().padStart(2, '0')}"`}
           </span>
         )}
@@ -96,7 +145,12 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
       {/* 底部信息 */}
       <div className="flex items-center justify-between text-xs text-gray-400">
         <div className="flex items-center gap-3">
-          {showUser && username && <span>@{username}</span>}
+          {showUser && username && (
+            <span className="flex items-center gap-1">
+              {is_ai_generated && <Bot size={12} className="text-primary-400" />}
+              @{username}
+            </span>
+          )}
           <span>{timeAgo(created_at)}</span>
         </div>
         <div className="flex items-center gap-3">

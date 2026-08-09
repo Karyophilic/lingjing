@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
-import { Lightbulb, Compass, MessageCircle, Bell, User, LogOut } from 'lucide-react'
+import { Lightbulb, Compass, MessageCircle, MessageSquare, User, LogOut } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: Lightbulb, label: '记录' },
   { to: '/square', icon: Compass, label: '广场' },
   { to: '/matches', icon: MessageCircle, label: '同频' },
-  { to: '/wakeup', icon: Bell, label: '唤醒' },
+  { to: '/ai-chat', icon: MessageSquare, label: 'AI对话' },
   { to: '/profile', icon: User, label: '我的' },
 ]
 
@@ -17,7 +17,7 @@ export default function Navbar() {
   return (
     <>
       {/* 顶部栏 */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-blue-50">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">💡</span>
@@ -34,7 +34,7 @@ export default function Navbar() {
       </header>
 
       {/* 底部导航 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-100 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-blue-50 safe-area-bottom">
         <div className="max-w-lg mx-auto flex justify-around py-2">
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to

@@ -4,8 +4,8 @@ import { useAuth } from '../stores/auth'
 import { localInspirations, localAI } from '../api/local'
 import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
-import AIAssistant from '../components/AIAssistant'
-import { Plus, Lightbulb, Zap } from 'lucide-react'
+import Mascot from '../components/Mascot'
+import { Plus, Lightbulb, Zap, MessageSquare } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
@@ -39,41 +39,62 @@ export default function Home() {
 
   return (
     <main className="max-w-lg mx-auto px-4 pt-6">
-      {/* 欢迎区 */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+      {/* 欢迎区 — blue gradient card */}
+      <div className="mb-8 p-5 rounded-2xl relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 40%, #e0f2fe 100%)',
+        }}
+      >
+        {/* 装饰圆 */}
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-4 left-1/2 w-16 h-16 rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }} />
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-1 relative z-10">
           👋 你好，{user?.username || '探索者'}
         </h1>
-        <p className="text-gray-500">今天有什么新的灵感？</p>
+        <p className="text-primary-700/70 relative z-10">今天有什么新的灵感？</p>
       </div>
 
       {/* 快捷操作卡片 */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-8">
         <button
           onClick={() => setShowCreate(true)}
-          className="card flex flex-col items-center justify-center py-6 hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer group"
+          className="card flex flex-col items-center justify-center py-5 hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer group"
         >
-          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-3 group-hover:bg-primary-200 transition-colors">
-            <Plus size={24} className="text-primary-500" />
+          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center mb-2 group-hover:bg-primary-200 transition-colors">
+            <Plus size={22} className="text-primary-500" />
           </div>
-          <span className="font-semibold text-gray-900">记录灵感</span>
-          <span className="text-xs text-gray-400 mt-1">文字 · 语音 · 图片</span>
+          <span className="font-semibold text-gray-900 text-sm">记录</span>
+          <span className="text-[10px] text-gray-400 mt-0.5">新灵感</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/ai-chat')}
+          className="card flex flex-col items-center justify-center py-5 hover:border-sky-200 hover:bg-sky-50/30 cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center mb-2 group-hover:bg-sky-200 transition-colors">
+            <MessageSquare size={22} className="text-sky-500" />
+          </div>
+          <span className="font-semibold text-gray-900 text-sm">AI对话</span>
+          <span className="text-[10px] text-gray-400 mt-0.5">激发灵感</span>
         </button>
 
         <button
           onClick={() => navigate('/wakeup')}
-          className="card flex flex-col items-center justify-center py-6 hover:border-spark-400/30 hover:bg-amber-50/30 cursor-pointer group relative"
+          className="card flex flex-col items-center justify-center py-5 hover:border-spark-400/30 hover:bg-amber-50/30 cursor-pointer group relative"
         >
           {wakeupCount > 0 && (
-            <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
               {wakeupCount}
             </span>
           )}
-          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-3 group-hover:bg-amber-200 transition-colors">
-            <Zap size={24} className="text-spark-500" />
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mb-2 group-hover:bg-amber-200 transition-colors">
+            <Zap size={22} className="text-spark-500" />
           </div>
-          <span className="font-semibold text-gray-900">AI 唤醒</span>
-          <span className="text-xs text-gray-400 mt-1">遗忘的灵感找回来</span>
+          <span className="font-semibold text-gray-900 text-sm">唤醒</span>
+          <span className="text-[10px] text-gray-400 mt-0.5">找回灵感</span>
         </button>
       </div>
 
@@ -121,8 +142,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* AI 助手提示 */}
-      <AIAssistant />
+      {/* Q版 AI 助手 — 小灵儿 */}
+      <Mascot />
 
       {/* 悬浮记录按钮（移动端） */}
       <button

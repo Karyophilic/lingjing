@@ -8,6 +8,7 @@ import InspirationDetail from './pages/InspirationDetail'
 import Square from './pages/Square'
 import Matches from './pages/Matches'
 import Wakeup from './pages/Wakeup'
+import AIChat from './pages/AIChat'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -20,7 +21,7 @@ function AppRoutes() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen pb-20" style={{ background: '#f0f7ff' }}>
       {user && <Navbar />}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
@@ -29,6 +30,7 @@ function AppRoutes() {
         <Route path="/inspiration/:id" element={<ProtectedRoute><InspirationDetail /></ProtectedRoute>} />
         <Route path="/square" element={<ProtectedRoute><Square /></ProtectedRoute>} />
         <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+        <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
         <Route path="/wakeup" element={<ProtectedRoute><Wakeup /></ProtectedRoute>} />
       </Routes>
     </div>
