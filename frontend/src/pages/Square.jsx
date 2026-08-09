@@ -1,16 +1,58 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { localInspirations } from '../api/local'
-import InspirationCard from '../components/InspirationCard'
-import { Search } from 'lucide-react'
+import { Search, Heart, MessageCircle, Mic, Image as ImageIcon, Bot, X } from 'lucide-react'
 
 const POPULAR_TAGS = ['创意', '科技', '艺术', '生活', '商业', '设计', '写作', '音乐']
 
+// 估算卡片高度（用于瀑布流列平衡）
+function estimateHeight(item) {
+  if (item.image_data) return 280
+  if (item.voice_data) return 160
+  const len = (item.title?.length || 0) + (item.content?.length || 0)
+  if (len < 40) return 150
+  if (len < 100) return 200
+  if (len < 200) return 260
+  return 320
+}
+
+// 瀑布流分配：贪心放入较短的列
+function waterfall(items) {
+  const left = [], right = []
+  let hL = 0, hR = 0
+  items.forEach(item => {
+    const h = estimateHeight(item)
+    if (hL <= hR) { left.push(item); hL += h }
+    else { right.push(item); hR += h }
+  })
+  return [left, right]
+}
+
+// 图片用色块（纯文本灵感的背景色）
+const COVER_GRADIENTS = [
+  'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+  'linear-gradient(135deg, #fce7f3, #fbcfe8)',
+  'linear-gradient(135deg, #d1fae5, #a7f3d0)',
+  'linear-gradient(135deg, #fef3c7, #fde68a)',
+  'linear-gradient(135deg, #ede9fe, #ddd6fe)',
+  'linear-gradient(135deg, #e0f2fe, #bae6fd)',
+  'linear-gradient(135deg, #ffe4e6, #fecdd3)',
+  'linear-gradient(135deg, #ccfbf1, #99f6e4)',
+]
+
+function coverGradient(id) {
+  let h = 0; for (let i = 0; i < id.length; i++) { h = ((h << 5) - h) + id.charCodeAt(i); h |= 0 }
+  return COVER_GRADIENTS[Math.abs(h) % COVER_GRADIENTS.length]
+}
+
 export default function Square() {
+  const navigate = useNavigate()
   const [inspirations, setInspirations] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTag, setActiveTag] = useState('')
   const [searchResults, setSearchResults] = useState(null)
+  const [likedSet, setLikedSet] = useState(new Set())
 
   const loadSquare = (tag) => {
     setLoading(true)
@@ -19,7 +61,7 @@ export default function Square() {
       setInspirations(res.data.items)
       setSearchResults(null)
     } catch (err) {
-      console.error('加载广场失败', err)
+      console.error('加载失败', err)
     } finally {
       setLoading(false)
     }
@@ -41,45 +83,205 @@ export default function Square() {
     }
   }
 
+  const clearSearch = () => {
+    setSearchQuery('')
+    setSearchResults(null)
+  }
+
   const displayItems = searchResults !== null ? searchResults : inspirations
+  const [leftCards, rightCards] = useMemo(() => waterfall(displayItems), [displayItems])
+
+  const toggleLike = (id) => {
+    localInspirations.like(id)
+    setLikedSet(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+    loadSquare(activeTag)
+  }
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return '刚刚'
+    if (mins < 60) return `${mins}分钟前`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}小时前`
+    const days = Math.floor(hours / 24)
+    if (days < 30) return `${days}天前`
+    return new Date(dateStr).toLocaleDateString('zh-CN')
+  }
+
+  // ---- 瀑布流卡片 ----
+  const WaterfallCard = ({ item }) => {
+    const gradient = coverGradient(item.id)
+    const likeCount = item.like_count || 0
+    const commentCount = item.comment_count || 0
+
+    return (
+      <Link
+        to={`/inspiration/${item.id}`}
+        className="block rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 group"
+        style={{ breakInside: 'avoid', marginBottom: 12 }}
+      >
+        {/* 封面区 */}
+        {item.image_data ? (
+          <div className="relative w-full" style={{ minHeight: 120 }}>
+            <img src={item.image_data} alt={item.title}
+              className="w-full object-cover" style={{ maxHeight: 280 }}
+              loading="lazy" />
+          </div>
+        ) : item.voice_data ? (
+          <div className="flex items-center justify-center p-6"
+            style={{ background: gradient, minHeight: 100 }}>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center mx-auto mb-2">
+                <Mic size={22} className="text-gray-600" />
+              </div>
+              <span className="text-xs text-gray-500">
+                {item.voice_duration > 0
+                  ? `${Math.floor(item.voice_duration / 60)}'${(item.voice_duration % 60).toString().padStart(2, '0')}"`
+                  : '语音'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center p-5"
+            style={{ background: gradient, minHeight: 90 }}>
+            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 text-center font-medium">
+              {item.content || item.title}
+            </p>
+          </div>
+        )}
+
+        {/* 信息区 */}
+        <div className="px-3 py-2.5">
+          {/* 标题 */}
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5">
+            {item.title}
+          </h3>
+
+          {/* 标签 */}
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {item.tags.slice(0, 2).map(t => (
+                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-500">
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 底部：用户 + 互动 */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-100 to-primary-200 flex items-center justify-center text-[10px] flex-shrink-0">
+                {item.is_ai_generated ? <Bot size={10} className="text-primary-400" /> : '👤'}
+              </div>
+              <span className="text-[11px] text-gray-400 truncate">
+                {item.username || '匿名'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-gray-400 flex-shrink-0">
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleLike(item.id) }}
+                className="flex items-center gap-0.5 hover:text-red-400 transition-colors"
+              >
+                <Heart size={12} fill={likedSet.has(item.id) ? '#f87171' : 'none'}
+                  stroke={likedSet.has(item.id) ? '#f87171' : 'currentColor'} />
+                {likeCount > 0 && <span>{likeCount}</span>}
+              </button>
+              <span className="flex items-center gap-0.5">
+                <MessageCircle size={12} />
+                {commentCount > 0 && <span>{commentCount}</span>}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    )
+  }
 
   return (
-    <main className="max-w-lg mx-auto px-4 pt-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">灵感广场</h1>
+    <main className="max-w-lg mx-auto px-3 pt-4 pb-24">
+      {/* 头部 */}
+      <div className="flex items-center justify-between mb-4 px-1">
+        <h1 className="text-xl font-bold text-gray-900">灵感广场</h1>
+      </div>
 
-      <form onSubmit={handleSearch} className="relative mb-4">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-          placeholder="搜索灵感..." className="input pl-10" />
+      {/* 搜索栏 */}
+      <form onSubmit={handleSearch} className="relative mb-3">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          placeholder="搜索灵感..."
+          className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 bg-white text-sm
+            focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all"
+        />
+        {searchQuery && (
+          <button type="button" onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X size={16} />
+          </button>
+        )}
       </form>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => { setActiveTag(''); setSearchQuery(''); setSearchResults(null) }}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!activeTag && searchResults === null ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+      {/* 标签筛选 — 水平滚动 */}
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+        <button onClick={() => { setActiveTag(''); clearSearch() }}
+          className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            !activeTag && searchResults === null
+              ? 'bg-primary-500 text-white shadow-sm'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}>
           全部
         </button>
         {POPULAR_TAGS.map(tag => (
-          <button key={tag} onClick={() => { setActiveTag(tag); setSearchQuery(''); setSearchResults(null) }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTag === tag ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+          <button key={tag} onClick={() => { setActiveTag(tag); clearSearch() }}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              activeTag === tag
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}>
             {tag}
           </button>
         ))}
       </div>
 
+      {/* 搜索结果提示 */}
       {searchResults !== null && (
-        <p className="text-sm text-gray-500 mb-4">"{searchQuery}" 的搜索结果 ({displayItems.length} 条)</p>
+        <p className="text-xs text-gray-500 mb-3 px-1">
+          搜索 "{searchQuery}" — {displayItems.length} 条结果
+        </p>
       )}
 
+      {/* 瀑布流 */}
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin text-3xl">💡</div>
+        </div>
       ) : displayItems.length === 0 ? (
-        <div className="card text-center py-12">
+        <div className="text-center py-20">
           <div className="text-5xl mb-4">🔍</div>
-          <p className="text-gray-500">{searchResults !== null ? '没有找到相关灵感' : '这个标签下还没有公开灵感'}</p>
+          <p className="text-gray-400 text-sm">
+            {searchResults !== null ? '没有找到相关灵感' : '还没有公开的灵感'}
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {displayItems.map(insp => <InspirationCard key={insp.id} inspiration={insp} onUpdate={() => loadSquare(activeTag)} />)}
+        <div className="flex gap-3">
+          {/* 左列 */}
+          <div className="flex-1 min-w-0">
+            {leftCards.map(item => (
+              <WaterfallCard key={item.id} item={item} />
+            ))}
+          </div>
+          {/* 右列 */}
+          <div className="flex-1 min-w-0">
+            {rightCards.map(item => (
+              <WaterfallCard key={item.id} item={item} />
+            ))}
+          </div>
         </div>
       )}
     </main>
