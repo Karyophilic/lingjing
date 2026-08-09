@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
-import { Lightbulb, Compass, MessageCircle, MessageSquare, User, LogOut } from 'lucide-react'
+import { Lightbulb, Compass, MessageCircle, MessageSquare, User, Globe, LogOut } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: Lightbulb, label: '记录' },
   { to: '/square', icon: Compass, label: '广场' },
-  { to: '/matches', icon: MessageCircle, label: '同频' },
-  { to: '/ai-chat', icon: MessageSquare, label: 'AI对话' },
+  { to: '/universe', icon: Globe, label: '星球' },
+  { to: '/ai-chat', icon: MessageSquare, label: 'AI' },
   { to: '/profile', icon: User, label: '我的' },
 ]
 

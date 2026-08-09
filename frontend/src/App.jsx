@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './stores/auth'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
@@ -10,6 +10,7 @@ import Square from './pages/Square'
 import Matches from './pages/Matches'
 import Wakeup from './pages/Wakeup'
 import AIChat from './pages/AIChat'
+import Universe from './pages/Universe'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -20,10 +21,12 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const { user } = useAuth()
+  const location = useLocation()
+  const isUniverse = location.pathname === '/universe'
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: '#f0f7ff' }}>
-      {user && <Navbar />}
+    <div className={isUniverse ? '' : 'min-h-screen pb-20'} style={{ background: isUniverse ? '#0a0a1a' : '#f0f7ff' }}>
+      {user && !isUniverse && <Navbar />}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -33,6 +36,7 @@ function AppRoutes() {
         <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
         <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
         <Route path="/wakeup" element={<ProtectedRoute><Wakeup /></ProtectedRoute>} />
+        <Route path="/universe" element={<ProtectedRoute><Universe /></ProtectedRoute>} />
       </Routes>
     </div>
   )
