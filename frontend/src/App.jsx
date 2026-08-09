@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './stores/auth'
+import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -39,8 +40,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

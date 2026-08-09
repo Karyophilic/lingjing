@@ -7,8 +7,14 @@ const STORAGE_KEY = 'lingjing_data'
 const SEED_VERSION = 2
 
 function loadDB() {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  let db = raw ? JSON.parse(raw) : { _seedVersion: 0 }
+  let db
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    db = raw ? JSON.parse(raw) : { _seedVersion: 0 }
+  } catch (e) {
+    console.warn('数据解析失败，已重置', e)
+    db = { _seedVersion: 0 }
+  }
   db = migrateDB(db)
   if (!db._seedVersion || db._seedVersion < SEED_VERSION) {
     seedData(db)
