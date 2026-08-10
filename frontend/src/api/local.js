@@ -1,10 +1,12 @@
 // ============================================
-// 本地存储引擎 — 无后端 + 模拟 AI
-// P2: 密码登录、AI对话、种子内容、存档、DB迁移
+// 本地存储引擎 — 无后端 + DeepSeek AI
+// P3: DeepSeek集成、手机/邮箱注册、游客模式、私信、多轮对话
 // ============================================
 
+import { chatWithXiaolinger, generateTags, generateWakeupMessage, analyzeUserMatch, hasApiKey } from './deepseek'
+
 const STORAGE_KEY = 'lingjing_data'
-const SEED_VERSION = 2
+const SEED_VERSION = 3
 
 function loadDB() {
   let db
@@ -34,7 +36,28 @@ function migrateDB(db) {
     db.profile[u.id] = db.profile[u.id] || { bio: '', avatar: '' }
     if (db.inspirations) db.inspirations.forEach(i => { if (!i.user_id) i.user_id = u.id; i.is_ai_generated = false; i.is_archived = false })
   }
+  // P2 → P3: users gain phone/email, aiChats becomes conversation-based, add messages
   if (!db.users) db.users = {}
+  Object.values(db.users).forEach(u => {
+    if (u.phone === undefined) u.phone = ''
+    if (u.email === undefined) u.email = ''
+  })
+  // Convert old flat aiChats to conversation-based
+  if (db.aiChats) {
+    for (const [uid, msgs] of Object.entries(db.aiChats)) {
+      if (Array.isArray(msgs) && msgs.length > 0 && !msgs[0]?.role) {
+        // Already converted (conversation-based)
+      } else if (Array.isArray(msgs)) {
+        db.aiChats[uid] = [{
+          chatId: uid(),
+          title: '历史对话',
+          messages: msgs,
+          createdAt: msgs[0]?.time || now(),
+          updatedAt: msgs[msgs.length - 1]?.time || now(),
+        }]
+      }
+    }
+  }
   if (!db.currentUserId) db.currentUserId = null
   if (!db.profile) db.profile = {}
   if (!db.inspirations) db.inspirations = []
@@ -43,6 +66,7 @@ function migrateDB(db) {
   if (!db.wakeupChecks) db.wakeupChecks = {}
   if (!db.aiChats) db.aiChats = {}
   if (!db.archived) db.archived = {}
+  if (!db.messages) db.messages = []
   db.inspirations.forEach(i => {
     if (i.is_ai_generated === undefined) i.is_ai_generated = false
     if (i.is_archived === undefined) i.is_archived = false
@@ -116,15 +140,19 @@ function seedData(db) {
 
 // ===== Auth =====
 export const localAuth = {
-  register(username, password) {
+  register(username, password, opts = {}) {
     const db = loadDB()
     if (db.users[username]) return { success: false, message: '用户名已存在' }
     const id = uid()
-    db.users[username] = { id, username, passwordHash: simpleHash(password), createdAt: now() }
+    db.users[username] = {
+      id, username, passwordHash: simpleHash(password),
+      phone: opts.phone || '', email: opts.email || '',
+      createdAt: now(),
+    }
     db.profile[id] = { bio: '', avatar: '' }
     db.currentUserId = id
     saveDB(db)
-    return { success: true, data: { user: { id, username, createdAt: db.users[username].createdAt } } }
+    return { success: true, data: { user: { id, username, phone: opts.phone || '', email: opts.email || '', createdAt: db.users[username].createdAt } } }
   },
   login(username, password) {
     const db = loadDB()
@@ -133,13 +161,27 @@ export const localAuth = {
     if (user.passwordHash !== simpleHash(password)) return { success: false, message: '密码错误' }
     db.currentUserId = user.id
     saveDB(db)
-    return { success: true, data: { user: { id: user.id, username: user.username, createdAt: user.createdAt } } }
+    return { success: true, data: { user: { id: user.id, username: user.username, phone: user.phone || '', email: user.email || '', createdAt: user.createdAt } } }
+  },
+  loginAsGuest() {
+    const db = loadDB()
+    const guestNum = Object.keys(db.users).filter(k => k.startsWith('guest_')).length + 1
+    const username = `guest_${guestNum}_${Date.now().toString(36).slice(-4)}`
+    const id = uid()
+    db.users[username] = {
+      id, username, passwordHash: '', phone: '', email: '',
+      createdAt: now(), isGuest: true,
+    }
+    db.profile[id] = { bio: '👋 游客用户', avatar: '' }
+    db.currentUserId = id
+    saveDB(db)
+    return { success: true, data: { user: { id, username, isGuest: true, createdAt: db.users[username].createdAt } } }
   },
   getCurrentUser() {
     const db = loadDB()
     if (!db.currentUserId) return null
     for (const un of Object.keys(db.users)) {
-      if (db.users[un].id === db.currentUserId) return { id: db.users[un].id, username: un, createdAt: db.users[un].createdAt }
+      if (db.users[un].id === db.currentUserId) return { id: db.users[un].id, username: un, phone: db.users[un].phone || '', email: db.users[un].email || '', isGuest: !!db.users[un].isGuest, createdAt: db.users[un].createdAt }
     }
     return null
   },
@@ -153,7 +195,18 @@ export const localAuth = {
     const db = loadDB(); const u = this.getCurrentUser()
     if (!u) return { success: false }
     db.profile[u.id] = Object.assign(db.profile[u.id] || {}, data)
-    if (data.username && data.username !== u.username) { db.users[data.username] = { ...db.users[u.username], username: data.username }; delete db.users[u.username] }
+    if (data.username && data.username !== u.username) {
+      const oldUser = db.users[u.username]
+      db.users[data.username] = { ...oldUser, username: data.username }
+      delete db.users[u.username]
+    }
+    if (data.phone !== undefined || data.email !== undefined) {
+      const curName = Object.keys(db.users).find(k => db.users[k].id === u.id)
+      if (curName) {
+        if (data.phone !== undefined) db.users[curName].phone = data.phone
+        if (data.email !== undefined) db.users[curName].email = data.email
+      }
+    }
     saveDB(db); return { success: true, data: { ...u, ...db.profile[u.id] } }
   },
   getStats() {
@@ -193,57 +246,164 @@ function simulateAITag(title, content) {
   return { tags: Array.from(matched).slice(0, 5), summary: title.length > 30 ? title.slice(0, 30) + '...' : title }
 }
 
-// ===== AI Chat =====
-const CHAT_INTENTS = [
-  { keywords: ['无聊','没灵感','不知道','想不出','空白','卡住','没有想法'], responses: [
-    '试试换个环境——去没去过的咖啡馆坐坐，或绕一条从没走过的路散步。灵感不太会在盯着屏幕时出现，它更喜欢在你分心时悄悄冒出来。',
-    '来玩个游戏：随便翻本书到第42页第5行第一个词，把它作为你下一个创意的起点。不管多离谱，先顺着想5分钟。',
-    '灵感不是等来的，是"撞"出来的。试试把两个完全无关的东西强行组合：比如"火锅×区块链"或"瑜伽×养猫"。',
-  ]},
-  { keywords: ['回忆','忘记','想不起来','遗忘','记不住','忘了什么'], responses: [
-    '闭上眼睛，想一下昨天洗澡时脑子里闪过的那个念头——那个"先不管它"的想法。它还在，只是需要你往回走两步。',
-    '试试"倒放"你的一天：从睡前开始往回放，看到什么画面就停下来。回忆有时不是往前找，是往后退。',
-    '翻翻相册找到最近一张随手拍的照片——当时你在想什么？那条线索可能还连着一段没被记录的灵感。',
-  ]},
-  { keywords: ['灵感','想法','点子','创意','念头'], responses: [
-    '好想法往往是你"偷"来的——不是抄袭，而是把别人的思路嫁接到自己的土壤上。最近有没有看到让你"哇"的东西？拆开看看里面是什么。',
-    '好灵感像种子：今天埋下去，过几天浇水，过几周发芽。别急着让它今天就完美，先记下来让时间发酵。',
-    '试试这个框架：我要为__(谁)，解决__(什么问题)，用__(什么方式)，让他们感到__(什么感觉)。填完4个空，灵感就有了骨架。',
-  ]},
-  { keywords: ['焦虑','压力','放弃','不行','做不好','失败','很难'], responses: [
-    '每个创作者都有"我的想法好垃圾"的时刻。这不是你，是创作的自然阶段。先写下来再说，质量是改出来的。',
-    '给自己"烂作品配额"：允许自己每月做出3个烂东西。当不再害怕做烂东西，灵感反而来得更快。',
-    '最成功的人不是灵感最多的人，而是把灵感坚持做完的人。你不需要爆炸性创意，只需要把这个做完。',
-  ]},
-  { keywords: ['帮助','帮我','建议','怎么办','怎么开始','怎么做'], responses: [
-    '先做一件事：把脑子里所有想法倒出来，不要整理不要判断好坏，像倒垃圾一样全倒出来。然后我们再一起挑。',
-    '从最小的一步开始。不是"做App"而是"打开备忘录写三行字"。不是"学画画"而是"在纸上画一个圆"。先动起来。',
-    '试试反向思考：你不想做什么？讨厌什么？有时候知道自己不要什么，比知道要什么更容易找到方向。',
-  ]},
-]
+async function aiTag(title, content) {
+  if (hasApiKey()) {
+    try {
+      const result = await generateTags(title, content)
+      if (result && result.tags?.length > 0) return result
+    } catch (e) { /* fallback */ }
+  }
+  return simulateAITag(title, content)
+}
 
+// ===== Fallback Chat (无 DeepSeek 时使用) =====
 function simulateChatResponse(userMessage, inspirationContext) {
-  const msg = userMessage.toLowerCase(); let best = null
-  for (const intent of CHAT_INTENTS) { for (const kw of intent.keywords) { if (msg.includes(kw)) { best = intent; break } } if (best) break }
+  const msg = userMessage.toLowerCase()
+  const intents = [
+    { keys: ['无聊','没灵感','不知道','想不出','空白','卡住','没有想法'], responses: [
+      '试试换个环境——去没去过的咖啡馆坐坐，或绕一条从没走过的路散步。灵感不太会在盯着屏幕时出现，它更喜欢在你分心时悄悄冒出来。',
+      '来玩个游戏：随便翻本书到第42页第5行第一个词，把它作为你下一个创意的起点。',
+      '灵感不是等来的，是"撞"出来的。试试把两个完全无关的东西强行组合！',
+    ]},
+    { keys: ['回忆','忘记','想不起来','遗忘','记不住'], responses: [
+      '闭上眼睛，想一下昨天洗澡时脑子里闪过的那个念头——它还在，只是需要你往回走两步。',
+      '翻翻相册找到最近一张随手拍的照片——当时你在想什么？那条线索可能还连着一段没被记录的灵感。',
+    ]},
+    { keys: ['灵感','想法','点子','创意','念头'], responses: [
+      '好想法往往是你"偷"来的——不是抄袭，而是把别人的思路嫁接到自己的土壤上。最近有没有看到让你"哇"的东西？',
+      '好灵感像种子：今天埋下去，过几天浇水，过几周发芽。别急着让它今天就完美，先记下来让时间发酵。',
+    ]},
+    { keys: ['焦虑','压力','放弃','不行','做不好','失败'], responses: [
+      '每个创作者都有"我的想法好垃圾"的时刻。这不是你，是创作的自然阶段。先写下来再说~',
+      '给自己"烂作品配额"：允许自己每月做出3个烂东西。当不再害怕做烂东西，灵感反而来得更快。',
+    ]},
+    { keys: ['帮助','帮我','建议','怎么办','怎么开始'], responses: [
+      '先做一件事：把脑子里所有想法倒出来，不要整理不要判断好坏，全倒出来。然后我们再一起挑。',
+      '从最小的一步开始。不是"做App"而是"打开备忘录写三行字"。先动起来。',
+    ]},
+  ]
+  let best = null
+  for (const intent of intents) { for (const kw of intent.keys) { if (msg.includes(kw)) { best = intent; break } } if (best) break }
   const pool = best ? best.responses : ['有意思！展开说说？', '这个想法不错！放大10倍会怎样？', '有趣。想过这个想法的"反面"吗？', '你正在酝酿一些东西。别急着下结论。', '灵感像猫，越追越跑。不如先做点别的。']
-  let prefix = ''; if (inspirationContext?.length > 0 && Math.random() > 0.5) { const ri = inspirationContext[Math.floor(Math.random() * inspirationContext.length)]; prefix = `💡 说起来，你记录过"${ri.title}"——这个想法和现在的你可能已经不一样了。\n\n` }
+  let prefix = ''
+  if (inspirationContext?.length > 0 && Math.random() > 0.5) {
+    const ri = inspirationContext[Math.floor(Math.random() * inspirationContext.length)]
+    prefix = `💡 说起来，你记录过"${ri.title}"——这个想法和现在的你可能已经不一样了。\n\n`
+  }
   return prefix + pool[Math.floor(Math.random() * pool.length)]
 }
 
+// ===== AI Chat (conversation-based) =====
 export const localAI = {
-  getChatHistory() { const db = loadDB(); const u = localAuth.getCurrentUser(); return u ? (db.aiChats[u.id] || []) : [] },
-  sendChatMessage(content) {
+  /** 获取当前用户的所有对话列表 */
+  getChatList() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return []
+    const chats = db.aiChats[u.id] || []
+    return chats.map(c => ({
+      chatId: c.chatId,
+      title: c.title || '新对话',
+      preview: c.messages?.length > 0 ? c.messages[c.messages.length - 1].content.slice(0, 30) : '',
+      messageCount: c.messages?.length || 0,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    })).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+  },
+
+  /** 获取某个对话的消息 */
+  getChat(chatId) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return null
+    const chats = db.aiChats[u.id] || []
+    return chats.find(c => c.chatId === chatId) || null
+  },
+
+  /** 开始新对话 */
+  startNewChat() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return null
+    if (!db.aiChats[u.id]) db.aiChats[u.id] = []
+    const chat = { chatId: uid(), title: '新对话', messages: [], createdAt: now(), updatedAt: now() }
+    db.aiChats[u.id].unshift(chat)
+    saveDB(db)
+    return chat
+  },
+
+  /** 发送消息（DeepSeek 优先，回退模拟） */
+  async sendChatMessage(chatId, content) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: false, message: '未登录' }
+    if (!db.aiChats[u.id]) db.aiChats[u.id] = []
+
+    let chat = db.aiChats[u.id].find(c => c.chatId === chatId)
+    if (!chat) {
+      chat = { chatId, title: content.slice(0, 20) || '新对话', messages: [], createdAt: now(), updatedAt: now() }
+      db.aiChats[u.id].unshift(chat)
+    }
+
+    const userMsg = { role: 'user', content, time: now() }
+    chat.messages.push(userMsg)
+    chat.updatedAt = now()
+
+    // 更新标题（用第一条用户消息）
+    if (chat.messages.filter(m => m.role === 'user').length === 1 && content.length <= 20) {
+      chat.title = content
+    }
+
+    // 尝试 DeepSeek
+    let aiContent = null
+    if (hasApiKey()) {
+      try {
+        const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
+        const history = chat.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+        aiContent = await chatWithXiaolinger(content, history, myInsp.slice(0, 5))
+      } catch (e) {
+        console.warn('DeepSeek 调用失败，使用本地模拟', e)
+      }
+    }
+
+    // 回退到本地模拟
+    if (!aiContent) {
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 800))
+      const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
+      aiContent = simulateChatResponse(content, myInsp.slice(0, 5))
+    }
+
+    const aiMsg = { role: 'assistant', content: aiContent, time: now() }
+    chat.messages.push(aiMsg)
+    chat.updatedAt = now()
+    saveDB(db)
+    return { success: true, data: { chatId: chat.chatId, userMsg, aiMsg } }
+  },
+
+  /** 获取旧版扁平历史（兼容） */
+  getChatHistory() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return []
+    const chats = db.aiChats[u.id] || []
+    // 返回当前活跃对话的消息，若没有则返回空
+    if (chats.length === 0) return []
+    return chats[0].messages || []
+  },
+
+  /** 删除对话 */
+  deleteChat(chatId) {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: false }
-    if (!db.aiChats[u.id]) db.aiChats[u.id] = []
-    const userMsg = { role: 'user', content, time: now() }; db.aiChats[u.id].push(userMsg)
-    const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
-    const aiContent = simulateChatResponse(content, myInsp.slice(0, 5))
-    const aiMsg = { role: 'assistant', content: aiContent, time: now() }; db.aiChats[u.id].push(aiMsg)
-    if (db.aiChats[u.id].length > 200) db.aiChats[u.id] = db.aiChats[u.id].slice(-100)
-    saveDB(db); return { success: true, data: { userMsg, aiMsg } }
+    if (!db.aiChats[u.id]) return { success: true }
+    db.aiChats[u.id] = db.aiChats[u.id].filter(c => c.chatId !== chatId)
+    saveDB(db)
+    return { success: true }
   },
-  clearChatHistory() { const db = loadDB(); const u = localAuth.getCurrentUser(); if (!u) return { success: false }; db.aiChats[u.id] = []; saveDB(db); return { success: true } },
+
+  clearChatHistory() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: false }
+    db.aiChats[u.id] = []
+    saveDB(db)
+    return { success: true }
+  },
+
   generateSuggestion() {
     const prompts = [
       { title: '今天看到的最触动你的东西', hint: '路上的一棵树、手机里的一句话、或陌生人的一个微笑' },
@@ -254,21 +414,37 @@ export const localAI = {
       { title: '如果只能教别人一件事，你会教什么', hint: '每个人都有自己的独门绝技' },
     ]; return prompts[Math.floor(Math.random() * prompts.length)]
   },
-  getWakeup() {
+
+  async getWakeup() {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: true, data: { items: [] } }
     const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
     const lastCheck = db.wakeupChecks[u.id]
     const candidates = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived && new Date(i.created_at) < new Date(threeDaysAgo)).filter(i => !lastCheck || new Date(i.created_at) > new Date(lastCheck)).slice(0, 5)
     db.wakeupChecks[u.id] = now(); saveDB(db)
+
+    // 尝试 DeepSeek 生成个性化唤醒消息
     const msgs = ['💡 还记得这个想法吗？','⏰ 几天前记下的灵感，回来看看？','🌟 被遗忘的念头在发光','🧠 这个灵感可能比想象中更有价值','🔔 灵感库存里有宝贝等你重新发现']
-    return { success: true, data: { items: candidates.map(i => ({ reminder_id: uid(), inspiration_id: i.id, title: i.title, message: msgs[Math.floor(Math.random() * 5)], remind_at: now() })) } }
+    const items = []
+    for (let i = 0; i < candidates.length; i++) {
+      let msg = msgs[Math.floor(Math.random() * 5)]
+      if (hasApiKey()) {
+        try {
+          const aiMsg = await generateWakeupMessage(candidates[i].title)
+          if (aiMsg) msg = aiMsg
+        } catch (e) { /* use fallback */ }
+      }
+      items.push({ reminder_id: uid(), inspiration_id: candidates[i].id, title: candidates[i].title, message: msg, remind_at: now() })
+    }
+    return { success: true, data: { items } }
   },
+
   getRelated(inspirationId) {
     const db = loadDB(); const cur = db.inspirations.find(i => i.id === inspirationId)
     if (!cur) return { success: true, data: { items: [] } }
-    return { success: true, data: { items: db.inspirations.filter(i => i.id !== cur.id && (i.tags || []).some(t => (cur.tags || []).includes(t))).slice(0, 3).map(i => ({ inspiration_id: i.id, title: i.title, connection: `共享标签：${i.tags.filter(t => cur.tags.includes(t)).slice(0, 2).join('、')}`, created_at: i.created_at })) } }
+    return { success: true, data: { items: db.inspirations.filter(i => i.id !== cur.id && (i.tags || []).some(t => (cur.tags || []).includes(t))).slice(0, 3).map(i => ({ inspiration_id: i.id, title: i.title, connection: `共享标签：${i.tags.filter(t => cur.tags.includes(t)).slice(0, 2).join('、')}`, created_at: i.created_at, username: i.username })) } }
   },
+
   getMatches() {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: true, data: { items: [], totalCount: 0 } }
@@ -279,6 +455,109 @@ export const localAI = {
     const tc = {}; mine.forEach(i => (i.tags || []).forEach(t => { tc[t] = (tc[t] || 0) + 1 }))
     return { success: true, data: { items: pairs.slice(0, 10), totalCount: mine.length, dominantTags: Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t), mode: 'single_player' } }
   },
+
+  /** 跨用户匹配 */
+  matchWithOthers() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: true, data: { items: [] } }
+    const myInspirations = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived && i.is_public)
+    if (myInspirations.length === 0) return { success: true, data: { items: [], message: '还没有公开的灵感' } }
+
+    const myTags = new Set()
+    myInspirations.forEach(i => (i.tags || []).forEach(t => myTags.add(t)))
+
+    // 找其他用户的公开灵感
+    const otherUsers = {}
+    db.inspirations.filter(i => i.is_public && i.user_id !== u.id).forEach(i => {
+      if (!otherUsers[i.user_id]) otherUsers[i.user_id] = { userId: i.user_id, username: i.username, inspirations: [], tags: new Set() }
+      otherUsers[i.user_id].inspirations.push(i)
+      ;(i.tags || []).forEach(t => otherUsers[i.user_id].tags.add(t))
+    })
+
+    // 计算每个用户的匹配分数
+    const matches = Object.values(otherUsers).map(other => {
+      const commonTags = [...other.tags].filter(t => myTags.has(t))
+      const union = new Set([...myTags, ...other.tags])
+      const score = union.size > 0 ? Math.round((commonTags.length / union.size) * 100) : 0
+      return {
+        userId: other.userId,
+        username: other.username,
+        matchScore: score,
+        commonTags: commonTags.slice(0, 5),
+        theirInspirations: other.inspirations.slice(0, 3).map(i => ({ id: i.id, title: i.title, tags: i.tags })),
+        myInspirations: myInspirations.slice(0, 3).map(i => ({ id: i.id, title: i.title, tags: i.tags })),
+      }
+    }).filter(m => m.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore)
+
+    return { success: true, data: { items: matches.slice(0, 20) } }
+  },
+}
+
+// ===== Private Messages =====
+export const localMessages = {
+  sendMessage(toUserId, content) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return { success: false, message: '未登录' }
+    if (u.isGuest) return { success: false, message: '游客不能发送私信' }
+    if (!db.messages) db.messages = []
+    const msg = { id: uid(), fromUserId: u.id, fromUsername: u.username, toUserId, content, timestamp: now(), read: false }
+    db.messages.push(msg)
+    saveDB(db)
+    return { success: true, data: msg }
+  },
+
+  getConversations() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return []
+    const msgs = db.messages || []
+    const relevant = msgs.filter(m => m.fromUserId === u.id || m.toUserId === u.id)
+
+    // 按对方用户聚合
+    const convMap = {}
+    relevant.forEach(m => {
+      const otherId = m.fromUserId === u.id ? m.toUserId : m.fromUserId
+      const otherName = m.fromUserId === u.id ? (() => {
+        const uid = m.toUserId
+        for (const un of Object.keys(db.users)) { if (db.users[un].id === uid) return un }
+        return '未知用户'
+      })() : m.fromUsername
+      if (!convMap[otherId] || new Date(m.timestamp) > new Date(convMap[otherId].lastTime)) {
+        convMap[otherId] = {
+          userId: otherId,
+          username: otherName,
+          lastMessage: m.content.slice(0, 50),
+          lastTime: m.timestamp,
+          unread: m.toUserId === u.id && !m.read,
+        }
+      }
+    })
+
+    return Object.values(convMap).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime))
+  },
+
+  getMessages(withUserId) {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return []
+    const msgs = db.messages || []
+    const conversation = msgs.filter(m =>
+      (m.fromUserId === u.id && m.toUserId === withUserId) ||
+      (m.fromUserId === withUserId && m.toUserId === u.id)
+    ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+
+    // 标记已读
+    let changed = false
+    conversation.forEach(m => {
+      if (m.toUserId === u.id && !m.read) { m.read = true; changed = true }
+    })
+    if (changed) saveDB(db)
+    return conversation
+  },
+
+  getUnreadCount() {
+    const db = loadDB(); const u = localAuth.getCurrentUser()
+    if (!u) return 0
+    return (db.messages || []).filter(m => m.toUserId === u.id && !m.read).length
+  },
 }
 
 // ===== Inspirations CRUD =====
@@ -288,6 +567,22 @@ export const localInspirations = {
     const ai = simulateAITag(data.title, data.content)
     const insp = { id: uid(), user_id: u?.id, username: u?.username || '匿名', title: data.title, content: data.content || '', content_type: data.content_type || 'text', image_data: data.image_data || null, voice_data: data.voice_data || null, voice_duration: data.voice_duration || 0, tags: ai.tags, is_public: data.is_public || false, is_pinned: false, is_ai_generated: false, is_archived: false, ai_summary: ai.summary, created_at: now(), updated_at: now() }
     db.inspirations.unshift(insp); saveDB(db)
+
+    // 异步尝试 DeepSeek 标签（不阻塞返回）
+    if (hasApiKey()) {
+      aiTag(data.title, data.content).then(result => {
+        if (result && result.tags?.length > 0) {
+          const db2 = loadDB()
+          const idx = db2.inspirations.findIndex(x => x.id === insp.id)
+          if (idx !== -1) {
+            db2.inspirations[idx].tags = result.tags
+            db2.inspirations[idx].ai_summary = result.summary
+            saveDB(db2)
+          }
+        }
+      }).catch(() => {})
+    }
+
     return { success: true, data: { inspiration: insp, tags: ai.tags, ai_summary: ai.summary } }
   },
   getMyList(page = 1, limit = 20) {

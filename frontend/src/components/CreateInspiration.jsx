@@ -149,8 +149,8 @@ export default function CreateInspiration({ onClose, onCreated }) {
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center">
       <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 animate-[slideUp_0.3s_ease-out] max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">💡 记录灵感</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <h2 className="text-xl font-bold text-gray-800">💡 记录灵感</h2>
+          <button onClick={onClose} className="p-2 hover:bg-beige-100 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>

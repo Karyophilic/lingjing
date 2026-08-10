@@ -11,11 +11,11 @@ export default function Wakeup() {
 
   useEffect(() => { loadWakeup() }, [])
 
-  const loadWakeup = () => {
+  const loadWakeup = async () => {
     setLoading(true)
     setChecked(false)
     try {
-      const res = localAI.getWakeup()
+      const res = await localAI.getWakeup()
       setReminders(res.data.items)
     } catch (err) {
       console.error('加载唤醒提醒失败', err)
@@ -26,20 +26,18 @@ export default function Wakeup() {
   }
 
   return (
-    <main className="max-w-lg mx-auto px-4 pt-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">AI 灵感唤醒</h1>
+    <main className="max-w-lg mx-auto px-4 pt-6 pb-24">
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">AI 灵感唤醒</h1>
       <p className="text-gray-500 text-sm mb-6">
-        灵感创建 72 小时后，AI 会帮你想起那些遗忘的念頭
+        灵感创建 72 小时后，AI 会帮你想起那些遗忘的念头
       </p>
 
       {loading && !checked ? (
         <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
       ) : reminders.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">
-            {checked ? '✨' : <BellOff size={48} className="mx-auto text-gray-300" />}
-          </div>
-          <p className="text-gray-900 font-medium mb-2">
+          <div className="text-5xl mb-4">{checked ? '✨' : <BellOff size={48} className="mx-auto text-gray-300" />}</div>
+          <p className="text-gray-800 font-medium mb-2">
             {checked ? '暂时没有需要唤醒的灵感' : '正在检查...'}
           </p>
           <p className="text-gray-400 text-sm">
@@ -51,8 +49,8 @@ export default function Wakeup() {
           {reminders.map(reminder => (
             <div key={reminder.reminder_id} className="card hover:border-primary-200 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                  <Bell size={18} className="text-spark-500" />
+                <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <Bell size={20} className="text-spark-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-600 leading-relaxed mb-3">{reminder.message}</p>

@@ -1,6 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
-import { Lightbulb, Compass, MessageCircle, MessageSquare, User, Globe, LogOut } from 'lucide-react'
+import { Lightbulb, Compass, MessageCircle, MessageSquare, User, Globe, LogOut, Mail } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { localMessages } from '../api/local'
 
 const navItems = [
   { to: '/', icon: Lightbulb, label: '记录' },
@@ -13,28 +15,55 @@ const navItems = [
 export default function Navbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (user && !user.isGuest) {
+      setUnreadCount(localMessages.getUnreadCount())
+      const timer = setInterval(() => {
+        setUnreadCount(localMessages.getUnreadCount())
+      }, 10000)
+      return () => clearInterval(timer)
+    }
+  }, [user])
 
   return (
     <>
       {/* 顶部栏 */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-blue-50">
+      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-beige-300/30">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">💡</span>
-            <span className="font-bold text-lg text-gray-900">灵境</span>
+            <span className="font-bold text-lg text-gray-800">灵境</span>
           </div>
-          <button
-            onClick={logout}
-            className="text-gray-400 hover:text-red-500 transition-colors"
-            title="退出登录"
-          >
-            <LogOut size={20} />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* 私信按钮 */}
+            {!user?.isGuest && (
+              <NavLink
+                to="/messages"
+                className="relative p-2 text-gray-400 hover:text-primary-500 transition-colors"
+              >
+                <Mail size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </NavLink>
+            )}
+            <button
+              onClick={logout}
+              className="text-gray-400 hover:text-red-500 transition-colors p-2"
+              title="退出登录"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* 底部导航 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-blue-50 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-t border-beige-300/30 safe-area-bottom">
         <div className="max-w-lg mx-auto flex justify-around py-2">
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to

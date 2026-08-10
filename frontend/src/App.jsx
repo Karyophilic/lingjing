@@ -11,6 +11,7 @@ import Matches from './pages/Matches'
 import Wakeup from './pages/Wakeup'
 import AIChat from './pages/AIChat'
 import Universe from './pages/Universe'
+import Messages from './pages/Messages'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -25,7 +26,7 @@ function AppRoutes() {
   const isUniverse = location.pathname === '/universe'
 
   return (
-    <div className={isUniverse ? '' : 'min-h-screen pb-20'} style={{ background: isUniverse ? '#0a0a1a' : '#f0f7ff' }}>
+    <div className={isUniverse ? '' : 'min-h-screen pb-20'} style={{ background: isUniverse ? '#0a0a1a' : '#FAF7F2' }}>
       {user && !isUniverse && <Navbar />}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
@@ -34,6 +35,8 @@ function AppRoutes() {
         <Route path="/inspiration/:id" element={<ProtectedRoute><InspirationDetail /></ProtectedRoute>} />
         <Route path="/square" element={<ProtectedRoute><Square /></ProtectedRoute>} />
         <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+        <Route path="/messages/:userId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
         <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
         <Route path="/wakeup" element={<ProtectedRoute><Wakeup /></ProtectedRoute>} />
         <Route path="/universe" element={<ProtectedRoute><Universe /></ProtectedRoute>} />

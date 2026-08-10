@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { localInspirations } from '../api/local'
-import { Search, Heart, MessageCircle, Mic, Image as ImageIcon, Bot, X } from 'lucide-react'
+import { Search, Heart, MessageCircle, Mic, Image as ImageIcon, Bot, X, Sparkles, MessageSquare } from 'lucide-react'
 
 const POPULAR_TAGS = ['创意', '科技', '艺术', '生活', '商业', '设计', '写作', '音乐']
 
-// 估算卡片高度（用于瀑布流列平衡）
 function estimateHeight(item) {
   if (item.image_data) return 280
   if (item.voice_data) return 160
@@ -16,7 +15,6 @@ function estimateHeight(item) {
   return 320
 }
 
-// 瀑布流分配：贪心放入较短的列
 function waterfall(items) {
   const left = [], right = []
   let hL = 0, hR = 0
@@ -28,16 +26,15 @@ function waterfall(items) {
   return [left, right]
 }
 
-// 图片用色块（纯文本灵感的背景色）
 const COVER_GRADIENTS = [
-  'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-  'linear-gradient(135deg, #fce7f3, #fbcfe8)',
-  'linear-gradient(135deg, #d1fae5, #a7f3d0)',
-  'linear-gradient(135deg, #fef3c7, #fde68a)',
-  'linear-gradient(135deg, #ede9fe, #ddd6fe)',
-  'linear-gradient(135deg, #e0f2fe, #bae6fd)',
-  'linear-gradient(135deg, #ffe4e6, #fecdd3)',
-  'linear-gradient(135deg, #ccfbf1, #99f6e4)',
+  'linear-gradient(135deg, #E8F4FD, #D0E8FB)',
+  'linear-gradient(135deg, #FDF0ED, #FCE4DC)',
+  'linear-gradient(135deg, #E8F8F5, #D1F2EB)',
+  'linear-gradient(135deg, #FEF9E7, #FDEBD0)',
+  'linear-gradient(135deg, #EBE8FD, #DDD6FE)',
+  'linear-gradient(135deg, #E8F4FD, #BAE6FD)',
+  'linear-gradient(135deg, #FDEDEC, #FADBD8)',
+  'linear-gradient(135deg, #E0F2F1, #B2DFDB)',
 ]
 
 function coverGradient(id) {
@@ -53,6 +50,9 @@ export default function Square() {
   const [activeTag, setActiveTag] = useState('')
   const [searchResults, setSearchResults] = useState(null)
   const [likedSet, setLikedSet] = useState(new Set())
+  const [showMatches, setShowMatches] = useState(false)
+  const [matchResults, setMatchResults] = useState([])
+  const [matching, setMatching] = useState(false)
 
   const loadSquare = (tag) => {
     setLoading(true)
@@ -88,6 +88,20 @@ export default function Square() {
     setSearchResults(null)
   }
 
+  const handleMatch = async () => {
+    setMatching(true)
+    setShowMatches(true)
+    await new Promise(r => setTimeout(r, 800))
+    try {
+      const res = localInspirations.matchWithOthers()
+      setMatchResults(res.data?.items || [])
+    } catch (err) {
+      console.error('匹配失败', err)
+    } finally {
+      setMatching(false)
+    }
+  }
+
   const displayItems = searchResults !== null ? searchResults : inspirations
   const [leftCards, rightCards] = useMemo(() => waterfall(displayItems), [displayItems])
 
@@ -113,7 +127,6 @@ export default function Square() {
     return new Date(dateStr).toLocaleDateString('zh-CN')
   }
 
-  // ---- 瀑布流卡片 ----
   const WaterfallCard = ({ item }) => {
     const gradient = coverGradient(item.id)
     const likeCount = item.like_count || 0
@@ -122,10 +135,9 @@ export default function Square() {
     return (
       <Link
         to={`/inspiration/${item.id}`}
-        className="block rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300 group"
-        style={{ breakInside: 'avoid', marginBottom: 12 }}
+        className="block rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-300 group"
+        style={{ marginBottom: 12 }}
       >
-        {/* 封面区 */}
         {item.image_data ? (
           <div className="relative w-full" style={{ minHeight: 120 }}>
             <img src={item.image_data} alt={item.title}
@@ -137,7 +149,7 @@ export default function Square() {
             style={{ background: gradient, minHeight: 100 }}>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center mx-auto mb-2">
-                <Mic size={22} className="text-gray-600" />
+                <Mic size={22} className="text-gray-500" />
               </div>
               <span className="text-xs text-gray-500">
                 {item.voice_duration > 0
@@ -155,25 +167,21 @@ export default function Square() {
           </div>
         )}
 
-        {/* 信息区 */}
         <div className="px-3 py-2.5">
-          {/* 标题 */}
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5">
+          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-1.5">
             {item.title}
           </h3>
 
-          {/* 标签 */}
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {item.tags.slice(0, 2).map(t => (
-                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-500">
+                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary-50 text-primary-600">
                   {t}
                 </span>
               ))}
             </div>
           )}
 
-          {/* 底部：用户 + 互动 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 min-w-0">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-100 to-primary-200 flex items-center justify-center text-[10px] flex-shrink-0">
@@ -207,7 +215,7 @@ export default function Square() {
     <main className="max-w-lg mx-auto px-3 pt-4 pb-24">
       {/* 头部 */}
       <div className="flex items-center justify-between mb-4 px-1">
-        <h1 className="text-xl font-bold text-gray-900">灵感广场</h1>
+        <h1 className="text-xl font-bold text-gray-800">灵感广场</h1>
       </div>
 
       {/* 搜索栏 */}
@@ -216,7 +224,7 @@ export default function Square() {
         <input
           type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           placeholder="搜索灵感..."
-          className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 bg-white text-sm
+          className="w-full pl-9 pr-10 py-2.5 rounded-2xl border border-beige-300/40 bg-white text-sm
             focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all"
         />
         {searchQuery && (
@@ -227,13 +235,29 @@ export default function Square() {
         )}
       </form>
 
-      {/* 标签筛选 — 水平滚动 */}
+      {/* 灵感匹配按钮 — 显眼的渐变按钮 */}
+      <button
+        onClick={handleMatch}
+        disabled={matching}
+        className="w-full mb-3 px-5 py-3 rounded-2xl text-white font-semibold text-sm
+          transition-all duration-200 active:scale-[0.98] pulse-glow flex items-center justify-center gap-2"
+        style={{
+          background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)',
+          boxShadow: '0 4px 20px rgba(108,92,231,0.3)',
+        }}
+      >
+        <Sparkles size={18} className="animate-pulse" />
+        ✨ 发现同频灵感
+        <span className="text-xs opacity-80">· 找到与你共鸣的伙伴</span>
+      </button>
+
+      {/* 标签筛选 */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
         <button onClick={() => { setActiveTag(''); clearSearch() }}
           className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
             !activeTag && searchResults === null
               ? 'bg-primary-500 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : 'bg-beige-100 text-gray-600 hover:bg-beige-200'
           }`}>
           全部
         </button>
@@ -242,7 +266,7 @@ export default function Square() {
             className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
               activeTag === tag
                 ? 'bg-primary-500 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-beige-100 text-gray-600 hover:bg-beige-200'
             }`}>
             {tag}
           </button>
@@ -270,20 +294,99 @@ export default function Square() {
         </div>
       ) : (
         <div className="flex gap-3">
-          {/* 左列 */}
           <div className="flex-1 min-w-0">
-            {leftCards.map(item => (
-              <WaterfallCard key={item.id} item={item} />
-            ))}
+            {leftCards.map(item => <WaterfallCard key={item.id} item={item} />)}
           </div>
-          {/* 右列 */}
           <div className="flex-1 min-w-0">
-            {rightCards.map(item => (
-              <WaterfallCard key={item.id} item={item} />
-            ))}
+            {rightCards.map(item => <WaterfallCard key={item.id} item={item} />)}
           </div>
         </div>
       )}
+
+      {/* 匹配结果弹窗 */}
+      {showMatches && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm"
+          onClick={() => setShowMatches(false)}>
+          <div
+            className="bg-white w-full max-w-lg max-h-[80vh] rounded-t-3xl sm:rounded-3xl p-6 overflow-y-auto animate-[slideUp_0.3s_ease-out]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Sparkles size={20} className="text-purple-500" /> 同频匹配
+              </h2>
+              <button onClick={() => setShowMatches(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+
+            {matching ? (
+              <div className="flex flex-col items-center py-12">
+                <div className="animate-spin text-3xl mb-3">💡</div>
+                <p className="text-gray-500 text-sm">正在分析灵感同频度...</p>
+              </div>
+            ) : matchResults.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-5xl mb-4">🔍</div>
+                <p className="text-gray-500 text-sm mb-2">暂无匹配结果</p>
+                <p className="text-gray-400 text-xs">
+                  多记录灵感并公开到广场，AI 会帮你找到同频的伙伴
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {matchResults.map((match, i) => (
+                  <div key={match.userId} className="card">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-beige-200 to-primary-100 flex items-center justify-center text-lg">
+                          👤
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-800 text-sm">@{match.username}</span>
+                          <p className="text-xs text-gray-400">{match.commonTags?.slice(0, 3).join(' · ')}</p>
+                        </div>
+                      </div>
+                      <span className="text-lg font-bold text-purple-500">{match.matchScore}%</span>
+                    </div>
+
+                    {/* 对方的灵感 */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {match.theirInspirations?.slice(0, 3).map(insp => (
+                        <button
+                          key={insp.id}
+                          onClick={() => navigate(`/inspiration/${insp.id}`)}
+                          className="text-xs px-2 py-1 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+                        >
+                          {insp.title.slice(0, 15)}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setShowMatches(false)
+                        navigate(`/messages/${match.userId}`)
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-medium text-sm transition-all active:scale-95"
+                      style={{ background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)' }}
+                    >
+                      <MessageSquare size={16} /> 私聊 @{match.username}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
     </main>
   )
 }

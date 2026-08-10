@@ -19,8 +19,14 @@ export function AuthProvider({ children }) {
     return res
   }
 
-  const register = (username, password) => {
-    const res = localAuth.register(username, password)
+  const register = (username, password, opts) => {
+    const res = localAuth.register(username, password, opts)
+    if (res.success) setUser(res.data.user)
+    return res
+  }
+
+  const loginAsGuest = () => {
+    const res = localAuth.loginAsGuest()
     if (res.success) setUser(res.data.user)
     return res
   }
@@ -31,7 +37,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, loginAsGuest, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -60,7 +60,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
             className={`p-1.5 rounded-lg transition-all ${
               is_archived
                 ? 'bg-primary-50 text-primary-500 opacity-100'
-                : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+                : 'hover:bg-beige-100 text-gray-300 hover:text-gray-500'
             }`}
             title={is_archived ? '取消存档' : '存档'}
           >
@@ -72,7 +72,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
           className={`p-1.5 rounded-lg transition-all ${
             is_pinned
               ? 'bg-spark-50 text-spark-500'
-              : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+              : 'hover:bg-beige-100 text-gray-300 hover:text-gray-500'
           } ${is_pinned ? 'opacity-100' : ''}`}
           title={is_pinned ? '取消置顶' : '置顶'}
         >
@@ -80,7 +80,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
         </button>
       </div>
 
-      {/* 已置顶时不显示顶部按钮（已在上面显示） */}
+      {/* 已置顶时的可见按钮 */}
       {is_pinned && (
         <div className="absolute top-4 right-4 flex gap-0.5">
           {showArchive && (
@@ -89,7 +89,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
               className={`p-1.5 rounded-lg transition-all ${
                 is_archived
                   ? 'bg-primary-50 text-primary-500'
-                  : 'hover:bg-gray-100 text-gray-300 hover:text-gray-500'
+                  : 'hover:bg-beige-100 text-gray-300 hover:text-gray-500'
               }`}
               title={is_archived ? '取消存档' : '存档'}
             >
@@ -115,13 +115,13 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
 
       {/* 图片缩略图 */}
       {image_data && (
-        <div className="mb-3 rounded-lg overflow-hidden">
+        <div className="mb-3 rounded-xl overflow-hidden">
           <img src={image_data} alt={title} className="w-full h-32 object-cover" loading="lazy" />
         </div>
       )}
 
       {/* 标题 */}
-      <h3 className="font-semibold text-lg text-gray-900 mb-1 line-clamp-1">{title}</h3>
+      <h3 className="font-semibold text-lg text-gray-800 mb-1 line-clamp-1">{title}</h3>
 
       {/* AI 摘要 */}
       {ai_summary && (

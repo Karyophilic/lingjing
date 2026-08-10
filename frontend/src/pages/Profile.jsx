@@ -4,15 +4,12 @@ import { useAuth } from '../stores/auth'
 import { localInspirations, localAuth } from '../api/local'
 import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
-import {
-  Plus, Search, Edit3, Check, X,
-  TrendingUp, Clock, FileText, Heart, Tag as TagIcon, Archive
-} from 'lucide-react'
+import { Plus, Search, Edit3, Check, X, TrendingUp, Clock, FileText, Heart, Tag as TagIcon, Archive, Phone, Mail } from 'lucide-react'
 
 export default function Profile() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('active') // 'active' | 'archived'
+  const [tab, setTab] = useState('active')
   const [inspirations, setInspirations] = useState([])
   const [archivedInspirations, setArchivedInspirations] = useState([])
   const [stats, setStats] = useState(null)
@@ -21,11 +18,12 @@ export default function Profile() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  // 编辑资料
   const [profile, setProfile] = useState(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [editBio, setEditBio] = useState('')
   const [editUsername, setEditUsername] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editEmail, setEditEmail] = useState('')
 
   const loadData = useCallback(() => {
     setLoading(true)
@@ -54,11 +52,18 @@ export default function Profile() {
   const startEditProfile = () => {
     setEditBio(profile?.bio || '')
     setEditUsername(profile?.username || '')
+    setEditPhone(profile?.phone || '')
+    setEditEmail(profile?.email || '')
     setEditingProfile(true)
   }
 
   const saveProfile = () => {
-    localAuth.updateProfile({ bio: editBio.trim(), username: editUsername.trim() })
+    localAuth.updateProfile({
+      bio: editBio.trim(),
+      username: editUsername.trim(),
+      phone: editPhone.trim(),
+      email: editEmail.trim(),
+    })
     setEditingProfile(false)
     loadData()
     window.location.reload()
@@ -87,35 +92,34 @@ export default function Profile() {
       <div className="card mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 via-primary-100 to-blue-200 flex items-center justify-center text-3xl shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-beige-100 via-primary-50 to-blue-100 flex items-center justify-center text-3xl shadow-sm">
               👤
             </div>
             <div>
               {editingProfile ? (
                 <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={editUsername}
-                    onChange={e => setEditUsername(e.target.value)}
-                    className="input text-sm py-1.5"
-                    maxLength={20}
-                    placeholder="昵称"
-                  />
-                  <textarea
-                    value={editBio}
-                    onChange={e => setEditBio(e.target.value)}
-                    className="input text-sm py-1.5 resize-none"
-                    rows={2}
-                    maxLength={200}
-                    placeholder="简介..."
-                  />
+                  <input type="text" value={editUsername} onChange={e => setEditUsername(e.target.value)}
+                    className="input text-sm py-1.5" maxLength={20} placeholder="昵称" />
+                  <input type="tel" value={editPhone} onChange={e => setEditPhone(e.target.value)}
+                    className="input text-sm py-1.5" maxLength={11} placeholder="手机号（选填）" />
+                  <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                    className="input text-sm py-1.5" placeholder="邮箱（选填）" />
+                  <textarea value={editBio} onChange={e => setEditBio(e.target.value)}
+                    className="input text-sm py-1.5 resize-none" rows={2} maxLength={200} placeholder="简介..." />
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold text-gray-900">@{profile?.username || '探索者'}</h2>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {profile?.bio || '这个人很懒，还没写简介...'}
-                  </p>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    @{profile?.username || '探索者'}
+                    {user?.isGuest && <span className="text-xs text-coral-500 ml-2 bg-coral-50 px-2 py-0.5 rounded-full">游客</span>}
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">{profile?.bio || '这个人很懒，还没写简介...'}</p>
+                  {(profile?.phone || profile?.email) && (
+                    <div className="flex gap-3 mt-1 text-xs text-gray-400">
+                      {profile?.phone && <span className="flex items-center gap-1"><Phone size={10} /> {profile.phone}</span>}
+                      {profile?.email && <span className="flex items-center gap-1"><Mail size={10} /> {profile.email}</span>}
+                    </div>
+                  )}
                   <p className="text-xs text-gray-300 mt-1">
                     {stats?.joinedAt ? `${new Date(stats.joinedAt).toLocaleDateString('zh-CN')} 加入` : ''}
                   </p>
@@ -126,26 +130,25 @@ export default function Profile() {
           <div className="flex gap-1">
             {editingProfile ? (
               <>
-                <button onClick={saveProfile} className="p-2 rounded-lg bg-primary-50 text-primary-500 hover:bg-primary-100 transition-colors">
+                <button onClick={saveProfile} className="p-2 rounded-xl bg-primary-50 text-primary-500 hover:bg-primary-100 transition-colors">
                   <Check size={16} />
                 </button>
-                <button onClick={() => setEditingProfile(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                <button onClick={() => setEditingProfile(false)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
                   <X size={16} />
                 </button>
               </>
             ) : (
-              <button onClick={startEditProfile} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+              <button onClick={startEditProfile} className="p-2 rounded-xl hover:bg-beige-100 text-gray-400 transition-colors">
                 <Edit3 size={16} />
               </button>
             )}
           </div>
         </div>
 
-        {/* 统计数据 */}
         {stats && (
-          <div className="grid grid-cols-5 gap-2 pt-3 border-t border-gray-100">
+          <div className="grid grid-cols-5 gap-2 pt-3 border-t border-beige-200">
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">{stats.total}</div>
+              <div className="text-lg font-bold text-gray-800">{stats.total}</div>
               <div className="text-[10px] text-gray-400">灵感</div>
             </div>
             <div className="text-center">
@@ -171,7 +174,7 @@ export default function Profile() {
       {/* 创作分析 */}
       {stats && stats.total > 0 && (
         <div className="card mb-6">
-          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
             <TrendingUp size={18} className="text-primary-500" /> 创作分析
           </h3>
           <div className="space-y-3">
@@ -184,8 +187,7 @@ export default function Profile() {
                 <div className="flex flex-wrap gap-1">
                   {stats.topTags.map(({ tag, count }) => (
                     <span key={tag} className="inline-flex items-center gap-1 tag">
-                      {tag}
-                      <span className="text-[10px] opacity-60">{count}</span>
+                      {tag} <span className="text-[10px] opacity-60">{count}</span>
                     </span>
                   ))}
                 </div>
@@ -194,36 +196,30 @@ export default function Profile() {
             {stats.bestHour !== null && (
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Clock size={14} className="text-gray-400" />
-                <span>灵感高峰期：{hourLabel(stats.bestHour)} {stats.bestHour}:00 左右</span>
+                <span>灵感高峰期：{hourLabel(stats.bestHour)} {stats.bestHour}:00</span>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* 标签切换：活跃 / 存档 */}
+      {/* 标签切换 */}
       <div className="flex items-center gap-2 mb-4">
-        <button
-          onClick={() => { setTab('active'); setPage(1); setSearch('') }}
+        <button onClick={() => { setTab('active'); setPage(1); setSearch('') }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
             tab === 'active'
               ? 'bg-primary-500 text-white shadow-sm'
-              : 'bg-white text-gray-500 border border-gray-200 hover:border-primary-200'
-          }`}
-        >
-          <FileText size={16} />
-          活跃灵感
+              : 'bg-white text-gray-500 border border-beige-300/40 hover:border-primary-200'
+          }`}>
+          <FileText size={16} /> 活跃灵感
         </button>
-        <button
-          onClick={() => { setTab('archived'); setPage(1); setSearch('') }}
+        <button onClick={() => { setTab('archived'); setPage(1); setSearch('') }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
             tab === 'archived'
               ? 'bg-primary-500 text-white shadow-sm'
-              : 'bg-white text-gray-500 border border-gray-200 hover:border-primary-200'
-          }`}
-        >
-          <Archive size={16} />
-          存档
+              : 'bg-white text-gray-500 border border-beige-300/40 hover:border-primary-200'
+          }`}>
+          <Archive size={16} /> 存档
         </button>
         <div className="flex-1" />
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm py-2 px-4">
@@ -234,10 +230,8 @@ export default function Profile() {
       {/* 搜索 */}
       <div className="relative mb-4">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="搜索灵感或标签..." className="input pl-10"
-        />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="搜索灵感或标签..." className="input pl-10" />
       </div>
 
       {loading ? (
@@ -246,12 +240,7 @@ export default function Profile() {
         <div className="card text-center py-12">
           <div className="text-5xl mb-4">{tab === 'archived' ? '📦' : '📝'}</div>
           <p className="text-gray-500">
-            {search
-              ? '没有匹配的灵感'
-              : tab === 'archived'
-                ? '还没有存档的灵感'
-                : '还没有灵感，记录第一个吧'
-            }
+            {search ? '没有匹配的灵感' : tab === 'archived' ? '还没有存档的灵感' : '还没有灵感，记录第一个吧'}
           </p>
           {!search && tab === 'active' && (
             <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex items-center gap-2">
@@ -274,7 +263,6 @@ export default function Profile() {
         </>
       )}
 
-      {/* 创建灵感弹窗 */}
       {showCreate && (
         <CreateInspiration onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); loadData() }} />
       )}
