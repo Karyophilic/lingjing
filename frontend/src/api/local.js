@@ -3,7 +3,7 @@
 // P3: DeepSeek集成、手机/邮箱注册、游客模式、私信、多轮对话
 // ============================================
 
-import { chatWithXiaolinger, generateTags, generateWakeupMessage, analyzeUserMatch, hasApiKey } from './deepseek'
+import { chatWithXiaolinger, generateTags, generateWakeupMessage, hasApiKey } from './deepseek'
 
 const STORAGE_KEY = 'lingjing_data'
 const SEED_VERSION = 3
@@ -256,43 +256,6 @@ async function aiTag(title, content) {
   return simulateAITag(title, content)
 }
 
-// ===== Fallback Chat (无 DeepSeek 时使用) =====
-function simulateChatResponse(userMessage, inspirationContext) {
-  const msg = userMessage.toLowerCase()
-  const intents = [
-    { keys: ['无聊','没灵感','不知道','想不出','空白','卡住','没有想法'], responses: [
-      '试试换个环境——去没去过的咖啡馆坐坐，或绕一条从没走过的路散步。灵感不太会在盯着屏幕时出现，它更喜欢在你分心时悄悄冒出来。',
-      '来玩个游戏：随便翻本书到第42页第5行第一个词，把它作为你下一个创意的起点。',
-      '灵感不是等来的，是"撞"出来的。试试把两个完全无关的东西强行组合！',
-    ]},
-    { keys: ['回忆','忘记','想不起来','遗忘','记不住'], responses: [
-      '闭上眼睛，想一下昨天洗澡时脑子里闪过的那个念头——它还在，只是需要你往回走两步。',
-      '翻翻相册找到最近一张随手拍的照片——当时你在想什么？那条线索可能还连着一段没被记录的灵感。',
-    ]},
-    { keys: ['灵感','想法','点子','创意','念头'], responses: [
-      '好想法往往是你"偷"来的——不是抄袭，而是把别人的思路嫁接到自己的土壤上。最近有没有看到让你"哇"的东西？',
-      '好灵感像种子：今天埋下去，过几天浇水，过几周发芽。别急着让它今天就完美，先记下来让时间发酵。',
-    ]},
-    { keys: ['焦虑','压力','放弃','不行','做不好','失败'], responses: [
-      '每个创作者都有"我的想法好垃圾"的时刻。这不是你，是创作的自然阶段。先写下来再说~',
-      '给自己"烂作品配额"：允许自己每月做出3个烂东西。当不再害怕做烂东西，灵感反而来得更快。',
-    ]},
-    { keys: ['帮助','帮我','建议','怎么办','怎么开始'], responses: [
-      '先做一件事：把脑子里所有想法倒出来，不要整理不要判断好坏，全倒出来。然后我们再一起挑。',
-      '从最小的一步开始。不是"做App"而是"打开备忘录写三行字"。先动起来。',
-    ]},
-  ]
-  let best = null
-  for (const intent of intents) { for (const kw of intent.keys) { if (msg.includes(kw)) { best = intent; break } } if (best) break }
-  const pool = best ? best.responses : ['有意思！展开说说？', '这个想法不错！放大10倍会怎样？', '有趣。想过这个想法的"反面"吗？', '你正在酝酿一些东西。别急着下结论。', '灵感像猫，越追越跑。不如先做点别的。']
-  let prefix = ''
-  if (inspirationContext?.length > 0 && Math.random() > 0.5) {
-    const ri = inspirationContext[Math.floor(Math.random() * inspirationContext.length)]
-    prefix = `💡 说起来，你记录过"${ri.title}"——这个想法和现在的你可能已经不一样了。\n\n`
-  }
-  return prefix + pool[Math.floor(Math.random() * pool.length)]
-}
-
 // ===== AI Chat (conversation-based) =====
 export const localAI = {
   /** 获取当前用户的所有对话列表 */
@@ -333,6 +296,7 @@ export const localAI = {
   async sendChatMessage(chatId, content) {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: false, message: '未登录' }
+    if (!hasApiKey()) return { success: false, code: 'NO_API_KEY', message: '请先配置 DeepSeek API Key' }
     if (!db.aiChats[u.id]) db.aiChats[u.id] = []
 
     let chat = db.aiChats[u.id].find(c => c.chatId === chatId)
@@ -350,24 +314,16 @@ export const localAI = {
       chat.title = content
     }
 
-    // 尝试 DeepSeek
+    // 只使用用户自己的 DeepSeek API Key
     let aiContent = null
-    if (hasApiKey()) {
-      try {
-        const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
-        const history = chat.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
-        aiContent = await chatWithXiaolinger(content, history, myInsp.slice(0, 5))
-      } catch (e) {
-        console.warn('DeepSeek 调用失败，使用本地模拟', e)
-      }
-    }
-
-    // 回退到本地模拟
-    if (!aiContent) {
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 800))
+    try {
       const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
-      aiContent = simulateChatResponse(content, myInsp.slice(0, 5))
+      const history = chat.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+      aiContent = await chatWithXiaolinger(content, history, myInsp.slice(0, 5))
+    } catch (e) {
+      aiContent = `⚠️ API 调用失败：${e.message || '请检查 DeepSeek API Key 与额度'}`
     }
+    if (!aiContent) aiContent = '⚠️ 没有收到回复，请检查 API Key 或稍后再试。'
 
     const aiMsg = { role: 'assistant', content: aiContent, time: now() }
     chat.messages.push(aiMsg)
@@ -418,6 +374,7 @@ export const localAI = {
   async getWakeup() {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: true, data: { items: [] } }
+    if (!hasApiKey()) return { success: true, data: { items: [], needsApiKey: true } }
     const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
     const lastCheck = db.wakeupChecks[u.id]
     const candidates = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived && new Date(i.created_at) < new Date(threeDaysAgo)).filter(i => !lastCheck || new Date(i.created_at) > new Date(lastCheck)).slice(0, 5)
@@ -564,12 +521,15 @@ export const localMessages = {
 export const localInspirations = {
   create(data) {
     const db = loadDB(); const u = localAuth.getCurrentUser()
-    const ai = simulateAITag(data.title, data.content)
+    const hasKey = hasApiKey()
+    const ai = hasKey
+      ? simulateAITag(data.title, data.content)
+      : { tags: data.tags || ['灵感'], summary: null }
     const insp = { id: uid(), user_id: u?.id, username: u?.username || '匿名', title: data.title, content: data.content || '', content_type: data.content_type || 'text', image_data: data.image_data || null, voice_data: data.voice_data || null, voice_duration: data.voice_duration || 0, tags: ai.tags, is_public: data.is_public || false, is_pinned: false, is_ai_generated: false, is_archived: false, ai_summary: ai.summary, created_at: now(), updated_at: now() }
     db.inspirations.unshift(insp); saveDB(db)
 
-    // 异步尝试 DeepSeek 标签（不阻塞返回）
-    if (hasApiKey()) {
+    // 只有配置了自己的 API Key 才调用 AI 打标
+    if (hasKey) {
       aiTag(data.title, data.content).then(result => {
         if (result && result.tags?.length > 0) {
           const db2 = loadDB()
@@ -605,7 +565,16 @@ export const localInspirations = {
   update(id, data) {
     const db = loadDB(); const idx = db.inspirations.findIndex(x => x.id === id)
     if (idx === -1) return { success: false, message: '不存在' }
-    if (data.title || data.content) { const insp = db.inspirations[idx]; const ai = simulateAITag(data.title || insp.title, data.content !== undefined ? data.content : insp.content); data.tags = ai.tags; data.ai_summary = ai.summary }
+    if (data.title || data.content) {
+      const insp = db.inspirations[idx]
+      if (hasApiKey()) {
+        const ai = simulateAITag(data.title || insp.title, data.content !== undefined ? data.content : insp.content)
+        data.tags = ai.tags
+        data.ai_summary = ai.summary
+      } else {
+        data.ai_summary = null
+      }
+    }
     Object.assign(db.inspirations[idx], data, { updated_at: now() }); saveDB(db); return { success: true, data: db.inspirations[idx] }
   },
   togglePin(id) { const db = loadDB(); const idx = db.inspirations.findIndex(x => x.id === id); if (idx === -1) return { success: false }; db.inspirations[idx].is_pinned = !db.inspirations[idx].is_pinned; db.inspirations[idx].updated_at = now(); saveDB(db); return { success: true, data: db.inspirations[idx] } },

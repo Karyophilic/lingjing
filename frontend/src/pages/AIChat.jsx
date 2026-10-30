@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { localAI } from '../api/local'
 import { hasApiKey, setApiKey, getApiKeyMasked } from '../api/deepseek'
 import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, Settings, ChevronRight } from 'lucide-react'
@@ -26,6 +27,7 @@ function MascotAvatar({ size = 40 }) {
 }
 
 export default function AIChat() {
+  const [searchParams] = useSearchParams()
   const [chatList, setChatList] = useState([])
   const [activeChatId, setActiveChatId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -41,6 +43,7 @@ export default function AIChat() {
   useEffect(() => {
     loadChatList()
     newSuggestion()
+    if (searchParams.get('settings') === 'api') setShowApiSettings(true)
   }, [])
 
   useEffect(() => {
@@ -81,6 +84,10 @@ export default function AIChat() {
   const handleSend = async () => {
     const text = input.trim()
     if (!text || loading) return
+    if (!hasApiKey()) {
+      setShowApiSettings(true)
+      return
+    }
 
     setInput('')
     setLoading(true)
@@ -97,9 +104,14 @@ export default function AIChat() {
       if (res.success) {
         setMessages(prev => [...prev, res.data.userMsg, res.data.aiMsg])
         loadChatList()
+      } else if (res.code === 'NO_API_KEY') {
+        setShowApiSettings(true)
+      } else {
+        alert(res.message || '发送失败，请稍后再试')
       }
     } catch (err) {
       console.error('发送消息失败', err)
+      alert(err.message || '发送失败，请检查 API Key')
     } finally {
       setLoading(false)
       newSuggestion()
@@ -284,7 +296,7 @@ export default function AIChat() {
               <Settings size={18} /> DeepSeek API 设置
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              接入 DeepSeek API 后，小灵儿将使用真正的 AI 与你对话。
+              灵境不提供内置 Key。请填入你自己的 DeepSeek API Key，它只保存在本地浏览器。
               <a href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer"
                 className="text-primary-500 ml-1 underline">获取 API Key →</a>
             </p>
@@ -361,7 +373,7 @@ export default function AIChat() {
                 onClick={() => setShowApiSettings(true)}
                 className="mt-6 text-sm text-primary-500 underline hover:text-primary-600"
               >
-                配置 DeepSeek API Key 获得更好的对话体验
+                使用前请先配置你自己的 DeepSeek API Key
               </button>
             )}
           </div>

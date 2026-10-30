@@ -35,7 +35,7 @@ export default function Matches() {
   return (
     <main className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <h1 className="text-2xl font-bold text-gray-800 mb-2">灵感关联</h1>
-      <p className="text-gray-500 text-sm mb-6">AI 分析你的灵感，找出隐藏的关联</p>
+      <p className="text-gray-500 text-sm mb-6">按标签找出灵感之间隐藏的关联</p>
 
       {/* 统计概览 */}
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -147,8 +147,8 @@ export default function Matches() {
           </p>
           <p className="text-gray-400 text-sm">
             {totalCount < 2
-              ? '至少记录 2 条灵感后，AI 会帮你找出它们之间的关联'
-              : '试试在不同方向记录灵感，AI 会找到意想不到的联系'}
+              ? '至少记录 2 条灵感后，系统会按标签找出它们之间的关联'
+              : '试试在不同方向记录灵感，也许能找到意想不到的联系'}
           </p>
         </div>
       )}

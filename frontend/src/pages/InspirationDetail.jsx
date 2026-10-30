@@ -145,7 +145,7 @@ export default function InspirationDetail() {
 
           {inspiration.ai_summary && (
             <div className="bg-primary-50 rounded-xl p-3 mb-4">
-              <p className="text-sm text-primary-700">🤖 AI 摘要：{inspiration.ai_summary}</p>
+              <p className="text-sm text-primary-700">🤖 摘要：{inspiration.ai_summary}</p>
             </div>
           )}
 
@@ -196,7 +196,7 @@ export default function InspirationDetail() {
       {related.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Lightbulb size={18} className="text-spark-500" /> AI 发现关联灵感
+            <Lightbulb size={18} className="text-spark-500" /> 相关灵感
           </h2>
           <div className="space-y-2">
             {related.map(r => (

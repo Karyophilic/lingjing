@@ -330,7 +330,7 @@ export default function Square() {
                 <div className="text-5xl mb-4">🔍</div>
                 <p className="text-gray-500 text-sm mb-2">暂无匹配结果</p>
                 <p className="text-gray-400 text-xs">
-                  多记录灵感并公开到广场，AI 会帮你找到同频的伙伴
+                  多记录灵感并公开到广场，按标签就能找到同频的伙伴
                 </p>
               </div>
             ) : (

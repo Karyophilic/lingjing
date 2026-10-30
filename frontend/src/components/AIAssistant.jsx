@@ -3,7 +3,7 @@ import { Sparkles, X } from 'lucide-react'
 
 const tips = [
   '💡 试试用语音记录灵感，比打字快 3 倍',
-  '🧠 AI 会帮你在 72 小时后唤醒遗忘的灵感',
+  '🧠 72 小时后，回来看看那些被遗忘的灵感',
   '🔗 灵感广场可以找到和你想得一样的人',
   '🎯 公开灵感更容易遇到同频的伙伴',
   '⚡ 灵感不等人，打开就记，3 秒搞定',
@@ -29,7 +29,7 @@ export default function AIAssistant() {
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-1.5 text-primary-500">
             <Sparkles size={16} />
-            <span className="text-xs font-bold">AI 小助手</span>
+            <span className="text-xs font-bold">灵感小助手</span>
           </div>
           <button
             onClick={() => setVisible(false)}

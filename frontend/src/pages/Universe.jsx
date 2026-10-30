@@ -103,34 +103,7 @@ function generateStars(count) {
   return stars
 }
 
-// 灵感联络配额管理
-function getLinkQuota() {
-  try {
-    const raw = localStorage.getItem('lingjing_link_quota')
-    if (!raw) return { date: '', used: 0 }
-    return JSON.parse(raw)
-  } catch { return { date: '', used: 0 } }
-}
-
-function useLinkQuota() {
-  const today = new Date().toDateString()
-  const quota = getLinkQuota()
-  if (quota.date !== today) {
-    const reset = { date: today, used: 0 }
-    localStorage.setItem('lingjing_link_quota', JSON.stringify(reset))
-    return { used: 0, remaining: 3 }
-  }
-  return { used: quota.used, remaining: Math.max(0, 3 - quota.used) }
-}
-
-function incrementLinkQuota() {
-  const { date, used } = getLinkQuota()
-  const today = new Date().toDateString()
-  localStorage.setItem('lingjing_link_quota', JSON.stringify({
-    date: date === today ? date : today,
-    used: date === today ? used + 1 : 1,
-  }))
-}
+// AI 连线只使用用户自己的 DeepSeek API Key
 
 // SVG 连线
 function ConnectionLines({ planets, selectedIds }) {
@@ -176,7 +149,6 @@ export default function Universe() {
   const containerRef = useRef(null)
 
   const stars = useMemo(() => generateStars(150), [])
-  const quota = useLinkQuota()
 
   useEffect(() => {
     const res = localInspirations.getMyList(1, 200)
@@ -218,31 +190,21 @@ export default function Universe() {
 
   const handleAnalyze = async () => {
     if (selectedIds.size < 2) return
-    if (quota.remaining <= 0 && !hasApiKey()) return
+    if (!hasApiKey()) {
+      navigate('/ai-chat?settings=api')
+      return
+    }
 
     setAnalyzing(true)
     setShowAnalysis(true)
 
-    const selectedPlanets = planets.filter(p => selectedIds.has(p.id))
     const selectedInsp = inspirations.filter(i => selectedIds.has(i.id))
 
     try {
-      let result
-      if (hasApiKey()) {
-        result = await analyzeInspirationConnections(selectedInsp)
-        incrementLinkQuota()
-      } else {
-        // 无 API Key 时的本地分析
-        await new Promise(r => setTimeout(r, 1500))
-        const allTags = new Set()
-        selectedInsp.forEach(i => (i.tags || []).forEach(t => allTags.add(t)))
-        const tagList = [...allTags]
-        const commonTag = tagList.length > 0 ? tagList[0] : '创意'
-        result = `✨ 我发现了！这 ${selectedInsp.length} 颗星球都在围绕"${commonTag}"这个主题发光呢～\n\n它们像是同一个星系里的不同星星，虽然各有各的光芒，但冥冥之中互相吸引。\n\n💡 试试把它们结合起来：${selectedInsp[0].title.slice(0, 15)} + ${selectedInsp[Math.min(1, selectedInsp.length-1)].title.slice(0, 15)}，会碰撞出什么新火花？`
-      }
+      const result = await analyzeInspirationConnections(selectedInsp)
       setAnalysis(result)
     } catch (e) {
-      setAnalysis('🤔 嗯...这些星球之间的联系有点微妙，让我再仔细看看～\n\n也许它们之间的关联需要更多时间来显现。试试记录更多灵感，让星球的连接更加清晰！')
+      setAnalysis(`⚠️ AI 分析失败：${e.message || '请检查 DeepSeek API Key 与额度'}`)
     } finally {
       setAnalyzing(false)
       exitSelectMode()
@@ -455,11 +417,11 @@ export default function Universe() {
               {selectedIds.size >= 2 && (
                 <button
                   onClick={handleAnalyze}
-                  disabled={analyzing || (quota.remaining <= 0 && !hasApiKey())}
-                  className="ml-3 px-4 py-1.5 rounded-full text-white font-semibold text-sm transition-all active:scale-95"
+                  disabled={analyzing || !hasApiKey()}
+                  className="ml-3 px-4 py-1.5 rounded-full text-white font-semibold text-sm transition-all active:scale-95 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)' }}
                 >
-                  {analyzing ? '分析中...' : '✨ 确认连线'}
+                  {analyzing ? '分析中...' : hasApiKey() ? '✨ 确认连线' : '需要 API Key'}
                 </button>
               )}
               <button onClick={exitSelectMode} className="ml-2 p-1.5 hover:bg-white/10 rounded-full transition-colors">
@@ -483,7 +445,7 @@ export default function Universe() {
             >
               <Link2 size={18} /> 灵感联络
               <span className="text-xs opacity-70 ml-1">
-                (今日剩余 {quota.remaining}/3)
+                ({hasApiKey() ? 'API Key 已配置' : '需要 API Key'})
               </span>
             </button>
           )}
@@ -546,13 +508,18 @@ export default function Universe() {
         </div>
       )}
 
-      {/* 额度用完提示 */}
-      {selectMode && quota.remaining <= 0 && !hasApiKey() && selectedIds.size >= 2 && (
+      {/* 未配置 API Key 提示 */}
+      {selectMode && !hasApiKey() && selectedIds.size >= 2 && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl text-white text-sm text-center animate-bounce-in"
           style={{ background: 'rgba(255,140,105,0.2)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,140,105,0.3)' }}
         >
-          <p>今天的灵感联络次数已用完~</p>
-          <p className="text-xs opacity-70 mt-1">明天再来探索吧！✨ 或配置 DeepSeek API Key 获得无限次数</p>
+          <p>AI 连线需要你自己的 DeepSeek API Key</p>
+          <button
+            onClick={() => navigate('/ai-chat?settings=api')}
+            className="mt-2 text-xs underline opacity-90 hover:opacity-100"
+          >
+            去配置 API Key →
+          </button>
         </div>
       )}
     </main>

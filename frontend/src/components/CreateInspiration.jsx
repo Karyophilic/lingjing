@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { X, Send, Mic, MicOff, Image as ImageIcon, Trash2 } from 'lucide-react'
 import { localInspirations } from '../api/local'
+import { hasApiKey } from '../api/deepseek'
 
 export default function CreateInspiration({ onClose, onCreated }) {
   const [title, setTitle] = useState('')
@@ -124,8 +125,8 @@ export default function CreateInspiration({ onClose, onCreated }) {
     if (!title.trim()) return
 
     setSubmitting(true)
-    // 模拟 AI 分析延迟
-    await new Promise(r => setTimeout(r, 800))
+    // 配置了 Key 才等待 AI 打标，否则只做本地保存
+    await new Promise(r => setTimeout(r, hasApiKey() ? 800 : 250))
     try {
       const res = localInspirations.create({
         title: title.trim(),
@@ -261,6 +262,12 @@ export default function CreateInspiration({ onClose, onCreated }) {
             />
           </div>
 
+          {!hasApiKey() && (
+            <p className="text-[11px] text-gray-400 mb-3">
+              未配置 API Key，本次不会调用 AI 打标，保存后会使用默认标签。
+            </p>
+          )}
+
           {/* 公开/私密 — 更显眼的开关 */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
@@ -298,7 +305,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
               ) : (
                 <Send size={18} />
               )}
-              {submitting ? 'AI 分析中...' : '记录灵感'}
+              {submitting ? (hasApiKey() ? 'AI 分析中...' : '保存中...') : '记录灵感'}
             </button>
           </div>
         </form>

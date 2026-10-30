@@ -149,7 +149,7 @@ export async function generateTags(title, content) {
     const tags = JSON.parse(result)
     if (Array.isArray(tags)) return { tags: tags.slice(0, 5), summary: title.length > 30 ? title.slice(0, 30) + '...' : title }
   } catch {
-    // 解析失败则回退到本地模拟
+    // 解析失败返回 null，由调用方处理
     return null
   }
   return null

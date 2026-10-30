@@ -123,7 +123,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
       {/* 标题 */}
       <h3 className="font-semibold text-lg text-gray-800 mb-1 line-clamp-1">{title}</h3>
 
-      {/* AI 摘要 */}
+      {/* 摘要 */}
       {ai_summary && (
         <p className="text-sm text-gray-500 mb-2 line-clamp-1">🤖 {ai_summary}</p>
       )}
