@@ -185,7 +185,7 @@ export default function Mascot() {
         <div className="absolute inset-0 rounded-full gentle-glow" />
 
         {/* Body — blue gradient blob */}
-        <div className="mascot-float relative w-14 h-14 rounded-full bg-gradient-to-br from-sky-400 via-primary-400 to-primary-500 shadow-lg shadow-primary-400/30 flex items-center justify-center">
+        <div className="mascot-float relative w-14 h-14 rounded-full bg-gradient-to-br from-spark-400 via-spark-500 to-coral-500 shadow-lg shadow-spark-400/30 flex items-center justify-center">
           <div className="absolute inset-1.5 rounded-full bg-gradient-to-b from-white/30 to-transparent" />
 
           {/* Eyes */}

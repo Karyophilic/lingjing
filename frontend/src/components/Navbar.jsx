@@ -30,22 +30,27 @@ export default function Navbar() {
   return (
     <>
       {/* 顶部栏 */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-beige-300/30">
+      <header className="sticky top-0 z-50 bg-paper-50/80 backdrop-blur-xl border-b border-beige-300/70">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">💡</span>
-            <span className="font-bold text-lg text-gray-800">灵境</span>
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-full bg-ink-800 text-paper-50 grid place-items-center text-[13px] leading-none">
+              ✦
+            </span>
+            <div className="leading-none">
+              <span className="font-display text-lg text-ink-800 tracking-[0.12em]">灵境</span>
+              <span className="hidden sm:block eyebrow mt-1">LINGJING</span>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {/* 私信按钮 */}
             {!user?.isGuest && (
               <NavLink
                 to="/messages"
-                className="relative p-2 text-gray-400 hover:text-primary-500 transition-colors"
+                className="relative p-2 text-ink-400 hover:text-ink-800 transition-colors"
               >
-                <Mail size={20} />
+                <Mail size={19} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-coral-500 text-paper-50 text-[10px] font-bold flex items-center justify-center">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -53,17 +58,17 @@ export default function Navbar() {
             )}
             <button
               onClick={logout}
-              className="text-gray-400 hover:text-red-500 transition-colors p-2"
+              className="text-ink-400 hover:text-coral-500 transition-colors p-2"
               title="退出登录"
             >
-              <LogOut size={20} />
+              <LogOut size={19} />
             </button>
           </div>
         </div>
       </header>
 
       {/* 底部导航 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-t border-beige-300/30 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-paper-50/85 backdrop-blur-xl border-t border-beige-300/70 safe-area-bottom">
         <div className="max-w-lg mx-auto flex justify-around py-2">
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to
@@ -72,11 +77,12 @@ export default function Navbar() {
                 key={to}
                 to={to}
                 className={`flex flex-col items-center gap-1 px-3 py-1 transition-colors ${
-                  active ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'
+                  active ? 'text-ink-800' : 'text-ink-300 hover:text-ink-500'
                 }`}
               >
-                <Icon size={22} />
-                <span className="text-[10px] font-medium">{label}</span>
+                <Icon size={20} strokeWidth={active ? 2.1 : 1.7} />
+                <span className="text-[10px] tracking-[0.08em]">{label}</span>
+                <span className={`w-1 h-1 rounded-full transition-colors ${active ? 'bg-spark-500' : 'bg-transparent'}`} />
               </NavLink>
             )
           })}

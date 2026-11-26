@@ -129,8 +129,8 @@ export default function Profile() {
       <div className="card mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-beige-100 via-primary-50 to-blue-100 flex items-center justify-center text-3xl shadow-sm">
-              👤
+            <div className="w-16 h-16 rounded-2xl bg-paper-100 border border-beige-300 flex items-center justify-center text-2xl font-display text-ink-600 shadow-sm">
+              {(profile?.username || '灵').slice(0, 1)}
             </div>
             <div>
               {editingProfile ? (
@@ -146,9 +146,9 @@ export default function Profile() {
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold text-gray-800">
+                  <h2 className="text-xl font-bold text-gray-800 break-all">
                     @{profile?.username || '探索者'}
-                    {user?.isGuest && <span className="text-xs text-coral-500 ml-2 bg-coral-50 px-2 py-0.5 rounded-full">游客</span>}
+                    {user?.isGuest && <span className="text-xs text-coral-500 ml-2 bg-coral-50 px-2 py-0.5 rounded-full whitespace-nowrap">游客</span>}
                   </h2>
                   <p className="text-sm text-gray-400 mt-1">{profile?.bio || '这个人很懒，还没写简介...'}</p>
                   {(profile?.phone || profile?.email) && (
@@ -193,7 +193,7 @@ export default function Profile() {
               <div className="text-[10px] text-gray-400">公开</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-red-400">{stats.totalLikes}</div>
+              <div className="text-lg font-bold text-coral-500">{stats.totalLikes}</div>
               <div className="text-[10px] text-gray-400">获赞</div>
             </div>
             <div className="text-center">
@@ -242,14 +242,14 @@ export default function Profile() {
 
       {/* AI 接口设置 */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
               <Key size={18} className="text-primary-500" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-bold text-gray-800 text-sm">AI 接口</h3>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 truncate">
                 {aiSummary.usingBuiltin
                   ? `站点内置接口 · ${aiSummary.model}`
                   : aiSummary.configured
@@ -260,7 +260,7 @@ export default function Profile() {
           </div>
           <button
             onClick={() => setShowAiSettings(true)}
-            className="btn-ghost text-sm flex items-center gap-1"
+            className="btn-ghost text-sm flex items-center gap-1 flex-shrink-0 whitespace-nowrap"
           >
             <Settings size={14} /> {aiSummary.configured ? '管理' : '配置'}
           </button>

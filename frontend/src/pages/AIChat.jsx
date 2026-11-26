@@ -11,7 +11,7 @@ function MascotAvatar({ size = 40 }) {
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <div className="absolute inset-0 rounded-full gentle-glow" />
-      <div className="mascot-float relative w-full h-full rounded-full bg-gradient-to-br from-sky-400 via-primary-400 to-primary-500 shadow-lg shadow-primary-400/30 flex items-center justify-center">
+      <div className="mascot-float relative w-full h-full rounded-full bg-gradient-to-br from-spark-400 via-spark-500 to-coral-500 shadow-lg shadow-spark-400/30 flex items-center justify-center">
         <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-white/30 to-transparent" />
         <div className="relative z-10 flex gap-2">
           <div className="eye-blink w-[6px] h-[8px] rounded-full bg-gray-800 relative">

@@ -40,22 +40,25 @@ export default function Home() {
   return (
     <main className="max-w-lg mx-auto px-4 pt-6">
       {/* 欢迎区 — 柔和蓝色渐变 */}
-      <div className="mb-8 p-6 rounded-3xl relative overflow-hidden"
+      <div className="mb-8 p-6 rounded-3xl relative overflow-hidden border border-beige-300/70"
         style={{
-          background: 'linear-gradient(135deg, #E8F4FD 0%, #D0E8FB 40%, #F0EDE8 100%)',
+          background: 'linear-gradient(135deg, #F7EEDA 0%, #F0E2C4 52%, #E7D4B0 100%)',
         }}
       >
-        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-4 left-1/2 w-16 h-16 rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }} />
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-25"
+          style={{ background: 'radial-gradient(circle, #FFFBEF 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-4 left-1/2 w-16 h-16 rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, #FFFBEF 0%, transparent 70%)' }} />
 
-        <h1 className="text-2xl font-bold text-gray-800 mb-1 relative z-10">
-          👋 你好，{user?.username || '探索者'}
+        <p className="eyebrow relative z-10 mb-2">
+          TODAY · {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}
+        </p>
+        <h1 className="text-2xl text-ink-800 mb-1 relative z-10">
+          你好，{user?.username || '探索者'}
         </h1>
-        <p className="text-gray-500 relative z-10">今天有什么新的灵感？</p>
+        <p className="text-ink-500 relative z-10">今天有什么新的灵感？</p>
         {user?.isGuest && (
-          <p className="text-xs text-coral-500 mt-1 relative z-10">游客模式 · 灵感不会丢失，但无法同步到其他设备</p>
+          <p className="text-xs text-coral-500 mt-2 relative z-10">游客模式 · 灵感不会丢失，但无法同步到其他设备</p>
         )}
       </div>
 

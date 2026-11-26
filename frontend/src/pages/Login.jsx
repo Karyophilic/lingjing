@@ -56,7 +56,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #FAF7F2 0%, #F5F0E8 30%, #E8F4FD 70%, #dbeafe 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #FAF4E7 0%, #F3E8D0 42%, #EAD9B7 100%)' }}
     >
       {/* 装饰性几何元素 */}
       <div className="absolute top-10 left-10 w-48 h-48 rounded-full opacity-20"
@@ -64,7 +64,7 @@ export default function Login() {
       <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full opacity-15"
         style={{ background: 'radial-gradient(circle, rgba(255,140,105,0.2) 0%, transparent 70%)' }} />
       <div className="absolute top-1/3 right-1/4 w-3 h-3 rounded-full bg-coral opacity-30" />
-      <div className="absolute bottom-1/4 left-1/3 w-4 h-4 rounded-full bg-blue-300 opacity-20" />
+      <div className="absolute bottom-1/4 left-1/3 w-4 h-4 rounded-full bg-spark-300 opacity-20" />
 
       <div className="w-full max-w-sm relative z-10">
         {/* Logo */}
@@ -72,7 +72,7 @@ export default function Login() {
           <div className="text-6xl mb-4 animate-float">💡</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">灵境</h1>
           <p className="text-gray-500 text-sm">灵感即社交 · 让每个念头找到归属</p>
-          <div className="flex items-center justify-center gap-1 mt-2 text-xs" style={{ color: '#5B9BD5' }}>
+          <div className="flex items-center justify-center gap-1 mt-2 text-xs" style={{ color: '#A9762A' }}>
             <Sparkles size={14} />
             <span>AI 驱动的灵感社交空间</span>
           </div>
@@ -81,11 +81,11 @@ export default function Login() {
         {/* Splash 文案 */}
         <div className="mb-6 px-5 py-4 rounded-2xl text-center animate-slide-up"
           style={{
-            background: 'linear-gradient(135deg, rgba(91,155,213,0.08), rgba(255,140,105,0.05))',
+            background: 'linear-gradient(135deg, rgba(192,138,46,0.10), rgba(255,140,105,0.05))',
             border: '1px solid rgba(91,155,213,0.12)',
           }}
         >
-          <p className="text-sm font-medium leading-relaxed" style={{ color: '#5B9BD5' }}>
+          <p className="text-sm font-medium leading-relaxed" style={{ color: '#A9762A' }}>
             你那些"算了不记了"的灵感，可能价值一百万 💰
           </p>
         </div>
@@ -96,8 +96,8 @@ export default function Login() {
             <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text" placeholder="输入昵称..."
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-white/80
-                focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
+              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
+                focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
                 transition-all duration-200 text-base placeholder:text-gray-300"
               value={username} onChange={e => setUsername(e.target.value)}
               autoFocus maxLength={20}
@@ -108,8 +108,8 @@ export default function Login() {
             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="password" placeholder="输入密码..."
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-white/80
-                focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
+              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
+                focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
                 transition-all duration-200 text-base placeholder:text-gray-300"
               value={password} onChange={e => setPassword(e.target.value)}
               maxLength={30}
@@ -123,8 +123,8 @@ export default function Login() {
                 <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="tel" placeholder="手机号（选填）"
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-white/80
-                    focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
+                    focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
                     transition-all duration-200 text-base placeholder:text-gray-300"
                   value={phone} onChange={e => setPhone(e.target.value)}
                   maxLength={11}
@@ -134,8 +134,8 @@ export default function Login() {
                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email" placeholder="邮箱（选填）"
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-white/80
-                    focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
+                    focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
                     transition-all duration-200 text-base placeholder:text-gray-300"
                   value={email} onChange={e => setEmail(e.target.value)}
                 />
@@ -155,8 +155,8 @@ export default function Login() {
               disabled:opacity-50 disabled:cursor-not-allowed
               shadow-lg"
             style={{
-              background: 'linear-gradient(135deg, #5B9BD5, #6DB3E8)',
-              boxShadow: '0 4px 16px rgba(91,155,213,0.3)',
+              background: 'linear-gradient(135deg, #2F2A21, #4A4437)',
+              boxShadow: '0 6px 18px rgba(43,39,31,0.2)',
             }}
           >
             {loading ? (
@@ -180,7 +180,7 @@ export default function Login() {
         <div className="mt-4 text-center">
           <button
             onClick={() => { setIsRegister(!isRegister); setError('') }}
-            className="text-sm transition-colors" style={{ color: '#5B9BD5' }}
+            className="text-sm transition-colors" style={{ color: '#A9762A' }}
           >
             {isRegister ? '已有账号？直接登录 →' : '还没有账号？注册一个 →'}
           </button>
@@ -211,7 +211,7 @@ export default function Login() {
         <div className="mt-3 text-center">
           <button
             onClick={quickStart}
-            className="text-sm text-gray-400 hover:text-blue-400 transition-colors"
+            className="text-sm text-gray-400 hover:text-spark-500 transition-colors"
           >
             或者，直接<u>快速体验</u> ✨
           </button>

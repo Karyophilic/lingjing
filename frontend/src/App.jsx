@@ -26,7 +26,7 @@ function AppRoutes() {
   const isUniverse = location.pathname === '/universe'
 
   return (
-    <div className={isUniverse ? '' : 'min-h-screen pb-20'} style={{ background: isUniverse ? '#0a0a1a' : '#FAF7F2' }}>
+    <div className={isUniverse ? '' : 'min-h-screen pb-20'} style={{ background: isUniverse ? '#F3EBD9' : 'transparent' }}>
       {user && !isUniverse && <Navbar />}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />

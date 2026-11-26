@@ -139,7 +139,7 @@ export default function InspirationDetail() {
               <span className="flex items-center gap-1 text-xs text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">
                 <ImageIcon size={12} /> 图片</span>)}
             {inspiration.content_type === 'voice' && (
-              <span className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs text-spark-600 bg-paper-100 px-2 py-0.5 rounded-full">
                 <Mic size={12} /> 语音</span>)}
           </div>
 
@@ -156,7 +156,7 @@ export default function InspirationDetail() {
           )}
 
           {inspiration.voice_data && (
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+            <div className="mb-4 p-3 bg-gradient-to-r from-paper-100 to-beige-100 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">🎙️</span>
                 <span className="text-sm font-medium text-gray-700">

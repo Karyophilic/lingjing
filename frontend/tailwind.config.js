@@ -4,47 +4,93 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 清透蓝色系 (替换原来的 primary)
+        // 墨色 — 主文字 / 主按钮（Cat Bag 的深色墨）
         primary: {
-          50: '#E8F4FD',
-          100: '#D0E8FB',
-          200: '#A1D2F7',
-          300: '#72BBF3',
-          400: '#5B9BD5',
-          500: '#4A8BC2',
-          600: '#3A7BAF',
-          700: '#2B6B9C',
-          800: '#1C5B89',
-          900: '#0D4B76',
+          50: '#F7F0DF',
+          100: '#EFE4CB',
+          200: '#E1D0AC',
+          300: '#CDB789',
+          400: '#8C7B5F',
+          500: '#2F2A21',
+          600: '#241F18',
+          700: '#1A1610',
+          800: '#110E0A',
+          900: '#0A0805',
         },
-        // 保留 sky 作为辅助蓝
+        // 鼠尾草 — 辅助色
         sky: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
+          50: '#F3F4EC',
+          100: '#E7EADC',
+          200: '#D3D9C0',
+          300: '#B7C09D',
+          400: '#98A47E',
+          500: '#7F8C6A',
+          600: '#677255',
         },
-        // 柔和米色系
+        // 纸色
         beige: {
-          50: '#FDFBF7',
-          100: '#FAF7F2',
-          200: '#F5F0E8',
-          300: '#EDE5D8',
-          400: '#D9CEBB',
+          50: '#FCF8ED',
+          100: '#F7F1E1',
+          200: '#F1E8D3',
+          300: '#E4D7BC',
+          400: '#D2C09C',
         },
-        // 珊瑚橙（点睛色）
+        paper: {
+          50: '#FBF6E9',
+          100: '#F6EFDD',
+          200: '#EFE5CE',
+          300: '#E4D6B8',
+        },
+        ink: {
+          50: '#F8F3E7',
+          100: '#EFE7D5',
+          200: '#DFD2B8',
+          300: '#C6B699',
+          400: '#9C8D74',
+          500: '#7A6D58',
+          600: '#5C5141',
+          700: '#433B2E',
+          800: '#2F2A21',
+          900: '#1C1913',
+        },
+        // 陶土
         coral: {
-          400: '#FF9E80',
-          500: '#FF8C69',
+          400: '#D08A6D',
+          500: '#B96B4D',
         },
-        // 保留 spark（暖黄）
+        // 琥珀
         spark: {
-          400: '#F4D03F',
-          500: '#F39C12',
+          300: '#E4C07E',
+          400: '#D9AC5B',
+          500: '#C08A2E',
+          600: '#A9762A',
         },
+        // 暖灰 — 替换 Tailwind 默认冷灰，让全站文字偏暖
+        gray: {
+          50: '#F8F4EA',
+          100: '#F1EBDD',
+          200: '#E4DAC7',
+          300: '#C9BCA3',
+          400: '#A2957C',
+          500: '#7E735F',
+          600: '#5F5646',
+          700: '#443E32',
+          800: '#2F2A21',
+          900: '#1C1913',
+        },
+        // 全站白色统一成奶油纸色
+        white: '#FCF7EB',
+      },
+      fontFamily: {
+        sans: [
+          '"PingFang SC"', '"Noto Sans SC"', '"Microsoft YaHei"',
+          'system-ui', '-apple-system', 'sans-serif',
+        ],
+        display: [
+          '"Songti SC"', '"Noto Serif SC"', '"Source Han Serif SC"',
+          '"SimSun"', 'Georgia', '"Times New Roman"', 'serif',
+        ],
+        mono: ['"SFMono-Regular"', 'Consolas', '"Liberation Mono"', 'monospace'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
@@ -59,16 +105,14 @@ export default {
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-8px)' },
+          '50%': { transform: 'translateY(-6px)' },
         },
         twinkle: {
           '0%, 100%': { opacity: '0.3' },
           '50%': { opacity: '1' },
         },
         'bounce-in': {
-          '0%': { opacity: '0', transform: 'scale(0.3)' },
-          '50%': { transform: 'scale(1.08)' },
-          '70%': { transform: 'scale(0.95)' },
+          '0%': { opacity: '0', transform: 'scale(0.96)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'slide-up': {
@@ -76,22 +120,22 @@ export default {
           to: { opacity: '1', transform: 'translateY(0)' },
         },
         'gentle-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(91,155,213,0.15), 0 0 40px rgba(91,155,213,0.08)' },
-          '50%': { boxShadow: '0 0 30px rgba(91,155,213,0.25), 0 0 60px rgba(91,155,213,0.14)' },
+          '0%, 100%': { boxShadow: '0 0 18px rgba(192,138,46,0.12), 0 0 36px rgba(192,138,46,0.06)' },
+          '50%': { boxShadow: '0 0 26px rgba(192,138,46,0.2), 0 0 52px rgba(192,138,46,0.1)' },
         },
         orbit: {
           '0%': { transform: 'rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg)' },
           '100%': { transform: 'rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 12px rgba(91,155,213,0.3), 0 0 24px rgba(91,155,213,0.1)' },
-          '50%': { boxShadow: '0 0 24px rgba(91,155,213,0.5), 0 0 48px rgba(91,155,213,0.2)' },
+          '0%, 100%': { boxShadow: '0 0 10px rgba(192,138,46,0.25), 0 0 20px rgba(192,138,46,0.08)' },
+          '50%': { boxShadow: '0 0 20px rgba(192,138,46,0.4), 0 0 40px rgba(192,138,46,0.16)' },
         },
       },
       borderRadius: {
-        'xl': '12px',
-        '2xl': '16px',
-        '3xl': '24px',
+        'xl': '10px',
+        '2xl': '14px',
+        '3xl': '20px',
       },
     },
   },

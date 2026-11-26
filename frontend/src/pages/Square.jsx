@@ -27,14 +27,14 @@ function waterfall(items) {
 }
 
 const COVER_GRADIENTS = [
-  'linear-gradient(135deg, #E8F4FD, #D0E8FB)',
-  'linear-gradient(135deg, #FDF0ED, #FCE4DC)',
-  'linear-gradient(135deg, #E8F8F5, #D1F2EB)',
-  'linear-gradient(135deg, #FEF9E7, #FDEBD0)',
-  'linear-gradient(135deg, #EBE8FD, #DDD6FE)',
-  'linear-gradient(135deg, #E8F4FD, #BAE6FD)',
-  'linear-gradient(135deg, #FDEDEC, #FADBD8)',
-  'linear-gradient(135deg, #E0F2F1, #B2DFDB)',
+  'linear-gradient(135deg, #F2E5C8, #E5CFA3)',
+  'linear-gradient(135deg, #E9EBDE, #D3D9C0)',
+  'linear-gradient(135deg, #EDD9CD, #DDBCA9)',
+  'linear-gradient(135deg, #E7DFE7, #CFBFD1)',
+  'linear-gradient(135deg, #F4EAD2, #E4CB93)',
+  'linear-gradient(135deg, #DDE3E7, #BFCAD2)',
+  'linear-gradient(135deg, #E8DACC, #CFB69E)',
+  'linear-gradient(135deg, #F7F0DE, #E6D8BA)',
 ]
 
 function coverGradient(id) {
@@ -242,7 +242,7 @@ export default function Square() {
         className="w-full mb-3 px-5 py-3 rounded-2xl text-white font-semibold text-sm
           transition-all duration-200 active:scale-[0.98] pulse-glow flex items-center justify-center gap-2"
         style={{
-          background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)',
+          background: 'linear-gradient(135deg, #2F2A21, #4A4437)',
           boxShadow: '0 4px 20px rgba(108,92,231,0.3)',
         }}
       >
@@ -369,7 +369,7 @@ export default function Square() {
                         navigate(`/messages/${match.userId}`)
                       }}
                       className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-medium text-sm transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)' }}
+                      style={{ background: 'linear-gradient(135deg, #2F2A21, #4A4437)' }}
                     >
                       <MessageSquare size={16} /> 私聊 @{match.username}
                     </button>

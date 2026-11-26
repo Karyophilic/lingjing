@@ -24,7 +24,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#f0f7ff' }}>
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3EBD9' }}>
           <div className="card max-w-sm w-full text-center py-10">
             <div className="text-6xl mb-4">🔧</div>
             <h2 className="text-lg font-bold text-gray-900 mb-2">出了点小问题</h2>
