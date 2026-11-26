@@ -57,8 +57,8 @@ export const inspirationAPI = {
       body: JSON.stringify(data),
     }),
 
-  getMyList: (userId, page = 1) =>
-    request(`/inspirations/my?user_id=${userId}&page=${page}&limit=20`),
+  getMyList: (_userId, page = 1) =>
+    request(`/inspirations/my?page=${page}&limit=20`),
 
   getDetail: (inspirationId) =>
     request(`/inspirations/detail/${inspirationId}`),
@@ -83,16 +83,16 @@ export const inspirationAPI = {
       body: JSON.stringify({ query }),
     }),
 
-  like: (inspirationId, userId) =>
-    request(`/inspirations/${inspirationId}/like?user_id=${userId}`, {
+  like: (inspirationId) =>
+    request(`/inspirations/${inspirationId}/like`, {
       method: 'POST',
     }),
 
   getComments: (inspirationId) =>
     request(`/inspirations/${inspirationId}/comments`),
 
-  createComment: (inspirationId, userId, content) =>
-    request(`/inspirations/${inspirationId}/comments?user_id=${userId}`, {
+  createComment: (inspirationId, _userId, content) =>
+    request(`/inspirations/${inspirationId}/comments`, {
       method: 'POST',
       body: JSON.stringify({ content }),
     }),
@@ -102,12 +102,12 @@ export const inspirationAPI = {
 // AI API
 // ============================================
 export const aiAPI = {
-  getWakeup: (userId) =>
-    request(`/ai/wakeup/${userId}`),
+  getWakeup: () =>
+    request('/ai/wakeup'),
 
   getRelated: (inspirationId) =>
     request(`/ai/related/${inspirationId}`),
 
-  getMatches: (userId) =>
-    request(`/ai/matches/${userId}`),
+  getMatches: () =>
+    request('/ai/matches'),
 }

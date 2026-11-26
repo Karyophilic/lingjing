@@ -3,7 +3,7 @@ from database import supabase
 from schemas import (
     UserRegister, UserLogin, UserProfile, ProfileUpdate, APIResponse,
 )
-from config import JWT_SECRET
+from auth_utils import create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
@@ -28,7 +28,10 @@ async def register(data: UserRegister):
         "username": data.username,
     }).execute()
 
-    return APIResponse(message="注册成功", data={"user_id": user_id})
+    return APIResponse(
+        message="注册成功",
+        data={"user_id": user_id, "access_token": create_access_token(user_id)},
+    )
 
 
 @router.post("/login", response_model=APIResponse)
@@ -42,19 +45,21 @@ async def login(data: UserLogin):
     except Exception as e:
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
 
+    user_id = auth_response.user.id
     return APIResponse(
         message="登录成功",
         data={
-            "access_token": auth_response.session.access_token,
-            "refresh_token": auth_response.session.refresh_token,
-            "user_id": auth_response.user.id,
+            "access_token": create_access_token(user_id),
+            "user_id": user_id,
         },
     )
 
 
 @router.get("/profile/{user_id}", response_model=APIResponse)
-async def get_profile(user_id: str):
-    """获取用户资料"""
+async def get_profile(user_id: str, current_user: str = Depends(get_current_user)):
+    """获取用户资料（仅本人）"""
+    if user_id != current_user:
+        raise HTTPException(status_code=403, detail="无权查看其他用户资料")
     r = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
     if not r.data:
         raise HTTPException(status_code=404, detail="用户不存在")
@@ -63,8 +68,14 @@ async def get_profile(user_id: str):
 
 
 @router.put("/profile/{user_id}", response_model=APIResponse)
-async def update_profile(user_id: str, data: ProfileUpdate):
-    """更新用户资料"""
+async def update_profile(
+    user_id: str,
+    data: ProfileUpdate,
+    current_user: str = Depends(get_current_user),
+):
+    """更新用户资料（仅本人）"""
+    if user_id != current_user:
+        raise HTTPException(status_code=403, detail="无权修改其他用户资料")
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if update_data:
         r = supabase.table("profiles").update(update_data).eq("id", user_id).execute()

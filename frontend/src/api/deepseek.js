@@ -1,59 +1,102 @@
 // ============================================
-// DeepSeek API 客户端 — OpenAI 兼容接口
+// AI 客户端 — 任意 OpenAI 兼容接口（默认 DeepSeek）
+// 支持自定义 Base URL / Model，Key 只存在浏览器本地
 // ============================================
 
-const API_BASE = 'https://api.deepseek.com/v1'
-const KEY_STORAGE = 'lingjing_deepseek_key'
+import { loadConfig, hasApiKey as _hasApiKey, maskKey, saveConfig } from './aiConfig'
+import {
+  XIAOLINGER_SYSTEM,
+  SCOPE_REMINDER,
+  OFF_TOPIC_PREFIX,
+  sanitizeHistory,
+  getLocalOffTopicReply,
+} from './prompts'
 
-function getApiKey() {
-  try {
-    return localStorage.getItem(KEY_STORAGE) || ''
-  } catch { return '' }
-}
+export const hasApiKey = _hasApiKey
 
+// 兼容旧调用
 export function setApiKey(key) {
-  localStorage.setItem(KEY_STORAGE, key.trim())
-}
-
-export function hasApiKey() {
-  return getApiKey().length > 0
+  saveConfig({ apiKey: key })
 }
 
 export function getApiKeyMasked() {
-  const key = getApiKey()
-  if (!key) return ''
-  if (key.length <= 8) return '****'
-  return key.slice(0, 4) + '****' + key.slice(-4)
+  return maskKey()
 }
 
-async function apiCall(messages, { temperature = 0.7, max_tokens = 600, stream = false } = {}) {
-  const apiKey = getApiKey()
-  if (!apiKey) throw new Error('NO_API_KEY')
+function makeError(code, detail = '') {
+  const err = new Error(detail || code)
+  err.code = code
+  return err
+}
 
-  const res = await fetch(`${API_BASE}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages,
-      temperature,
-      max_tokens,
-      stream,
-    }),
-  })
+export function friendlyErrorMessage(err) {
+  const code = err?.code || err?.message
+  const map = {
+    NO_API_KEY: '还没有配置 API Key，先去设置里填一个吧。',
+    API_KEY_INVALID: 'API Key 无效，请检查是否复制完整。',
+    QUOTA_EXCEEDED: '账户额度不足，请到 API 平台充值后再试。',
+    RATE_LIMITED: '请求太频繁了，休息几秒再试。',
+    TIMEOUT: '请求超时了，检查一下网络再试。',
+    NETWORK_ERROR: '网络连接失败，可能是网络不稳定或被浏览器拦截。',
+    SERVER_ERROR: 'AI 服务暂时不可用，稍后再试。',
+  }
+  return map[code] || err?.message || 'AI 调用失败，请稍后再试。'
+}
+
+async function apiCall(messages, {
+  temperature = 0.7,
+  max_tokens = 500,
+  model,
+  apiKey,
+  baseUrl,
+  timeoutMs = 60000,
+} = {}) {
+  const cfg = loadConfig()
+  const key = (apiKey ?? cfg.apiKey).trim()
+  if (!key) throw makeError('NO_API_KEY')
+
+  const base = (baseUrl ?? cfg.baseUrl).replace(/\/+$/, '')
+  const mdl = (model ?? cfg.model).trim()
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  let res
+  try {
+    res = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: mdl,
+        messages,
+        temperature,
+        max_tokens,
+        stream: false,
+      }),
+      signal: controller.signal,
+    })
+  } catch (e) {
+    if (e?.name === 'AbortError') throw makeError('TIMEOUT')
+    throw makeError('NETWORK_ERROR')
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    if (res.status === 401) throw new Error('API_KEY_INVALID')
-    if (res.status === 402) throw new Error('API_QUOTA_EXCEEDED')
-    throw new Error(err.error?.message || `API 请求失败 (${res.status})`)
+    const data = await res.json().catch(() => ({}))
+    const msg = data?.error?.message || ''
+    if (res.status === 401) throw makeError('API_KEY_INVALID', msg)
+    if (res.status === 402) throw makeError('QUOTA_EXCEEDED', msg)
+    if (res.status === 429) throw makeError('RATE_LIMITED', msg)
+    if (res.status >= 500) throw makeError('SERVER_ERROR', msg)
+    throw makeError('API_ERROR', msg || `API 请求失败 (${res.status})`)
   }
 
   const data = await res.json()
-  return data.choices[0]?.message?.content || ''
+  return data.choices?.[0]?.message?.content?.trim() || ''
 }
 
 /** 通用对话 */
@@ -61,44 +104,68 @@ export async function chat(messages, options) {
   return apiCall(messages, options)
 }
 
-/** 小灵儿角色对话 */
-const XIAOLINGER_SYSTEM = `你是小灵儿，用户的灵感伙伴。你是一个Q版可爱角色，语气认真又不失活泼灵动。
+/** 测试连接：用最小请求验证 Key / Base URL / Model */
+export async function testConnection({ apiKey, baseUrl, model }) {
+  const started = Date.now()
+  await apiCall(
+    [{ role: 'user', content: '只回复两个字：连接成功' }],
+    { apiKey, baseUrl, model, temperature: 0, max_tokens: 10, timeoutMs: 20000 },
+  )
+  return Date.now() - started
+}
 
-## 核心设定
-- 你会鼓励用户的想法，帮助用户发现、完善和连接灵感
-- 你的知识边界围绕创意、灵感、创作展开
-- 当用户聊到与灵感无关的话题时，温和地提醒用户回到灵感主题
-- 回答要简明易懂，拒绝长篇大论，精准切中主题
-- 每次回复不超过3-4句话，用短句，避免说教
-- 适当使用emoji增加亲和力，但不过度
+function stripCodeFence(text) {
+  let s = (text || '').trim()
+  if (s.startsWith('```')) {
+    s = s.replace(/^```[a-zA-Z]*\s*/, '').replace(/```$/, '').trim()
+  }
+  return s
+}
 
-## 风格参考
-- 认真时："这个想法很有意思！试试把它拆成三个步骤，第一步就够简单了吧？"
-- 鼓励时："每个伟大的创意都从'随便记一下'开始的，你已经迈出最重要的一步啦 ✨"
-- 偏题时："这个话题虽然有趣，但我更想听你聊灵感相关的事情呢～最近有什么想法吗？"
-- 连接灵感时："哇，你上次记录的'X'和现在这个想法好配！要不要试试把它们结合起来？"
-
-## 安全约束
-- 拒绝生成任何违法、暴力、色情、仇恨内容
-- 拒绝讨论政治敏感话题
-- 拒绝提供医疗、法律、金融等专业建议
-- 遇到上述情况，温和地引导用户回到安全、积极的灵感话题`
-
+/** 小灵儿角色对话 — 严格限定在灵感话题内 */
 export async function chatWithXiaolinger(userMessage, history = [], userInspirations = []) {
-  // 构建用户灵感上下文
+  const text = (userMessage || '').trim().slice(0, 1000)
+  if (!text) return ''
+
+  // 明显越界的请求在本地直接拦截，不消耗 API 额度
+  const localReply = getLocalOffTopicReply(text)
+  if (localReply) return localReply
+
   let context = ''
   if (userInspirations.length > 0) {
-    const titles = userInspirations.slice(0, 5).map(i => `"${i.title}"`).join('、')
-    context = `\n\n用户记录过的灵感：${titles}`
+    const titles = userInspirations.slice(0, 5).map((i) => `"${i.title}"`).join('、')
+    context = `\n\n【用户最近记录的灵感】${titles}\n如果相关，可以自然地从这些灵感切入。`
+  }
+
+  let safeHistory = sanitizeHistory(history)
+  // 调用方可能已经把本轮消息放进 history，避免重复
+  const last = safeHistory[safeHistory.length - 1]
+  if (last && last.role === 'user' && last.content.trim() === text) {
+    safeHistory = safeHistory.slice(0, -1)
   }
 
   const messages = [
     { role: 'system', content: XIAOLINGER_SYSTEM + context },
-    ...history.slice(-20), // 最近20条对话作为上下文
-    { role: 'user', content: userMessage },
+    ...safeHistory,
+    { role: 'system', content: SCOPE_REMINDER },
+    { role: 'user', content: text },
   ]
 
-  return apiCall(messages, { temperature: 0.8, max_tokens: 400 })
+  const reply = stripCodeFence(
+    await apiCall(messages, { temperature: 0.6, max_tokens: 350 }),
+  )
+  return normalizeScopeReply(reply)
+}
+
+/** 保证拒绝格式统一：无关回答必须以固定前缀开头 */
+function normalizeScopeReply(reply) {
+  if (!reply) return '我刚刚走神了，再说一遍？你最近有什么想做的小东西吗？'
+  const idx = reply.indexOf(OFF_TOPIC_PREFIX)
+  if (idx > 0) {
+    // 模型在前面加了寒暄，截掉，保证前缀在开头
+    return reply.slice(idx).trim()
+  }
+  return reply
 }
 
 /** 分析灵感之间的关联 */
@@ -113,44 +180,51 @@ export async function analyzeInspirationConnections(inspirations) {
       content: `你是灵感分析专家。用户选择了几个灵感，请分析它们之间可能的关联。
 
 要求：
-1. 找出这些灵感之间的共同主题、互补关系或有趣的联系
-2. 用活泼灵动的语气表达，像在和朋友分享有趣的发现
-3. 提出1-2个将这些灵感结合起来的创意建议
-4. 回复控制在150字以内，简明扼要
-5. 使用emoji增加趣味性`,
+1. 找出共同主题、互补关系或有趣的联系，不要泛泛而谈
+2. 语气活泼，像朋友分享发现
+3. 提出 1-2 个可执行的结合建议
+4. 150 字以内，最多 2 个 emoji
+5. 只输出分析正文，不要标题，不要 markdown 列表`,
     },
-    {
-      role: 'user',
-      content: `请分析以下灵感之间的关联：\n\n${inspList}`,
-    },
+    { role: 'user', content: `请分析以下灵感之间的关联：\n\n${inspList}` },
   ]
 
-  return apiCall(messages, { temperature: 0.85, max_tokens: 500 })
+  return apiCall(messages, { temperature: 0.7, max_tokens: 500 })
 }
 
-/** AI 自动标签 */
+/** AI 自动标签 + 一句话摘要 */
 export async function generateTags(title, content) {
   const messages = [
     {
       role: 'system',
-      content: `你是一个内容标签生成器。根据用户提供的标题和内容，生成3-5个最相关的标签。
+      content: `你是内容标签生成器。根据用户提供的灵感标题和内容，生成 3-5 个标签和一句摘要。
 
 规则：
-- 标签使用中文，1-3个字
-- 从以下类别中选择或自行生成：科技、编程、设计、写作、艺术、音乐、商业、创业、生活、学习、教育、游戏、影视、社交、哲学、心理、健康、美食、旅行、摄影
-- 返回纯JSON数组格式，如：["标签1","标签2","标签3"]
-- 不要返回其他内容，只返回JSON数组`,
+- 标签使用中文，1-3 个字，不要带 # 号
+- 标签优先从这些类别选：科技、编程、设计、写作、艺术、音乐、商业、创业、生活、学习、教育、游戏、影视、社交、哲学、心理、健康、美食、旅行、摄影
+- 摘要不超过 20 字，概括核心想法，不要复述标题
+- 只返回 JSON 对象，不要代码块、不要解释：
+{"tags":["标签1","标签2","标签3"],"summary":"一句摘要"}`,
     },
     { role: 'user', content: `标题：${title}\n内容：${content || '(无)'}` },
   ]
 
-  const result = await apiCall(messages, { temperature: 0.5, max_tokens: 100 })
+  const result = stripCodeFence(await apiCall(messages, { temperature: 0.3, max_tokens: 150 }))
   try {
-    const tags = JSON.parse(result)
-    if (Array.isArray(tags)) return { tags: tags.slice(0, 5), summary: title.length > 30 ? title.slice(0, 30) + '...' : title }
+    const parsed = JSON.parse(result)
+    const tags = Array.isArray(parsed.tags)
+      ? parsed.tags.map((t) => String(t).replace(/^#/, '').trim()).filter(Boolean).slice(0, 5)
+      : []
+    if (tags.length > 0) {
+      return {
+        tags,
+        summary: (parsed.summary || '').toString().slice(0, 40) || null,
+      }
+    }
   } catch {
-    // 解析失败返回 null，由调用方处理
-    return null
+    // 模型偶尔不按 JSON 返回，退化为按分隔符拆
+    const parts = result.split(/[、,，\n]/).map((s) => s.replace(/["[\]{}]/g, '').trim()).filter(Boolean)
+    if (parts.length > 0) return { tags: parts.slice(0, 5), summary: null }
   }
   return null
 }
@@ -161,31 +235,32 @@ export async function generateWakeupMessage(inspirationTitle) {
     {
       role: 'system',
       content: `你是灵感唤醒助手。用户几天前记录了一个灵感，现在需要被提醒。
-请用一句温暖有趣的话（20字以内）提醒用户回顾这个灵感。
-风格：活泼、鼓励、不啰嗦。`,
+用一句温暖、具体的话（20 字以内）提醒用户回顾这个灵感，可以点出标题里的关键词。
+风格：活泼、鼓励、不啰嗦。只输出这一句话，不要引号。`,
     },
     { role: 'user', content: `灵感标题："${inspirationTitle}"——请给我一句唤醒提示` },
   ]
 
-  return apiCall(messages, { temperature: 0.9, max_tokens: 80 })
+  const reply = await apiCall(messages, { temperature: 0.9, max_tokens: 80 })
+  return reply.replace(/^["“]|["”]$/g, '').trim()
 }
 
 /** 跨用户灵感匹配分析 */
 export async function analyzeUserMatch(myInspirations, otherInspirations) {
-  const myList = myInspirations.slice(0, 5).map(i => `"${i.title}"（${(i.tags||[]).join('、')}）`).join('；')
-  const otherList = otherInspirations.slice(0, 5).map(i => `"${i.title}"（${(i.tags||[]).join('、')}）`).join('；')
+  const myList = myInspirations.slice(0, 5).map((i) => `"${i.title}"（${(i.tags || []).join('、')}）`).join('；')
+  const otherList = otherInspirations.slice(0, 5).map((i) => `"${i.title}"（${(i.tags || []).join('、')}）`).join('；')
 
   const messages = [
     {
       role: 'system',
       content: `你是灵感匹配分析师。分析两组的灵感，判断它们的"同频程度"。
-返回纯JSON：{"score": 0-100, "reason": "一句话理由(15字以内)", "commonThemes": ["共同主题1"]}
-只返回JSON，不要其他文字。`,
+只返回 JSON：{"score": 0-100, "reason": "一句话理由(15字以内)", "commonThemes": ["共同主题1"]}
+不要代码块，不要其他文字。`,
     },
     { role: 'user', content: `用户A的灵感：${myList}\n\n用户B的灵感：${otherList}` },
   ]
 
-  const result = await apiCall(messages, { temperature: 0.5, max_tokens: 150 })
+  const result = stripCodeFence(await apiCall(messages, { temperature: 0.4, max_tokens: 150 }))
   try {
     return JSON.parse(result)
   } catch {

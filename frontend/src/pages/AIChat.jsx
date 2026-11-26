@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { localAI } from '../api/local'
-import { hasApiKey, setApiKey, getApiKeyMasked } from '../api/deepseek'
-import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, Settings, ChevronRight } from 'lucide-react'
+import { hasApiKey, getConfigSummary } from '../api/aiConfig'
+import { friendlyErrorMessage } from '../api/deepseek'
+import ApiSettingsModal from '../components/ApiSettingsModal'
+import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, ChevronRight, AlertCircle } from 'lucide-react'
 
 // 小灵儿头像（静态、不可拖动）
 function MascotAvatar({ size = 40 }) {
@@ -36,15 +38,20 @@ export default function AIChat() {
   const [suggestion, setSuggestion] = useState(null)
   const [showSidebar, setShowSidebar] = useState(false)
   const [showApiSettings, setShowApiSettings] = useState(false)
-  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [apiVersion, setApiVersion] = useState(0)
+  const [sendError, setSendError] = useState(null)
+  const [lastFailed, setLastFailed] = useState('')
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
     loadChatList()
     newSuggestion()
-    if (searchParams.get('settings') === 'api') setShowApiSettings(true)
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get('settings') === 'api') setShowApiSettings(true)
+  }, [searchParams])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -81,16 +88,17 @@ export default function AIChat() {
     setSuggestion(localAI.generateSuggestion())
   }
 
-  const handleSend = async () => {
-    const text = input.trim()
+  const sendMessage = async (raw) => {
+    const text = (raw || '').trim().slice(0, 1000)
     if (!text || loading) return
     if (!hasApiKey()) {
       setShowApiSettings(true)
       return
     }
 
-    setInput('')
+    if (raw === input) setInput('')
     setLoading(true)
+    setSendError(null)
 
     let chatId = activeChatId
     if (!chatId) {
@@ -103,21 +111,28 @@ export default function AIChat() {
       const res = await localAI.sendChatMessage(chatId, text)
       if (res.success) {
         setMessages(prev => [...prev, res.data.userMsg, res.data.aiMsg])
+        setLastFailed('')
         loadChatList()
       } else if (res.code === 'NO_API_KEY') {
         setShowApiSettings(true)
       } else {
-        alert(res.message || '发送失败，请稍后再试')
+        if (res.data?.userMsg) setMessages(prev => [...prev, res.data.userMsg])
+        setSendError(res.message || '发送失败，请稍后再试。')
+        setLastFailed(text)
       }
     } catch (err) {
       console.error('发送消息失败', err)
-      alert(err.message || '发送失败，请检查 API Key')
+      setSendError(friendlyErrorMessage(err))
+      setLastFailed(text)
     } finally {
       setLoading(false)
       newSuggestion()
       inputRef.current?.focus()
     }
   }
+
+  const handleSend = () => sendMessage(input)
+  const handleRetry = () => sendMessage(lastFailed)
 
   const handleDeleteChat = (chatId, e) => {
     e.stopPropagation()
@@ -147,16 +162,11 @@ export default function AIChat() {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // 中文输入法候选框回车不应触发发送
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent?.isComposing) {
       e.preventDefault()
       handleSend()
     }
-  }
-
-  const saveApiKey = () => {
-    setApiKey(apiKeyInput.trim())
-    setApiKeyInput('')
-    setShowApiSettings(false)
   }
 
   const timeStr = (t) => {
@@ -181,6 +191,9 @@ export default function AIChat() {
     return acc
   }, {})
 
+  const cfgSummary = getConfigSummary()
+  const apiReady = cfgSummary.configured
+
   return (
     <main className="max-w-lg mx-auto flex flex-col h-[calc(100vh-7rem)]">
       {/* 头部 */}
@@ -197,14 +210,15 @@ export default function AIChat() {
           <MascotAvatar size={36} />
           <div>
             <h2 className="font-bold text-gray-800 text-sm">小灵儿</h2>
-            <p className="text-xs text-gray-400">你的灵感伙伴</p>
+            <p className="text-xs text-gray-400">只聊灵感 · 别的话题会帮你转回来</p>
           </div>
         </div>
         <div className="flex gap-1">
           <button
             onClick={() => setShowApiSettings(true)}
-            className={`p-2 rounded-lg transition-colors ${hasApiKey() ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
-            title="API 设置"
+            className={`p-2 rounded-lg transition-colors ${apiReady ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
+            title={apiReady ? `AI 设置（${cfgSummary.model}）` : '配置 AI 接口'}
+            aria-label="AI 接口设置"
           >
             <Key size={16} />
           </button>
@@ -269,12 +283,16 @@ export default function AIChat() {
                         <span className="text-sm font-medium text-gray-800 truncate pr-2 flex-1">
                           {chat.title}
                         </span>
-                        <button
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label="删除对话"
                           onClick={(e) => handleDeleteChat(chat.chatId, e)}
-                          className="flex-shrink-0 p-1 hover:bg-red-50 rounded text-gray-300 hover:text-red-400 transition-colors"
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleDeleteChat(chat.chatId, e) }}
+                          className="flex-shrink-0 p-1 hover:bg-red-50 rounded text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
                         >
                           <Trash2 size={12} />
-                        </button>
+                        </span>
                       </div>
                       {chat.preview && (
                         <p className="text-xs text-gray-400 truncate mt-0.5">{chat.preview}</p>
@@ -288,43 +306,12 @@ export default function AIChat() {
         </div>
       )}
 
-      {/* API 设置弹窗 */}
-      {showApiSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowApiSettings(false)}>
-          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl animate-bounce-in" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
-              <Settings size={18} /> DeepSeek API 设置
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              灵境不提供内置 Key。请填入你自己的 DeepSeek API Key，它只保存在本地浏览器。
-              <a href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer"
-                className="text-primary-500 ml-1 underline">获取 API Key →</a>
-            </p>
-            {hasApiKey() && (
-              <div className="mb-3 p-3 bg-green-50 rounded-xl text-sm text-green-700 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                已配置：{getApiKeyMasked()}
-              </div>
-            )}
-            <input
-              type="password"
-              value={apiKeyInput}
-              onChange={e => setApiKeyInput(e.target.value)}
-              placeholder="sk-..."
-              className="input text-sm mb-3"
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button onClick={saveApiKey} disabled={!apiKeyInput.trim()}
-                className="btn-primary text-sm flex-1">保存</button>
-              <button onClick={() => setShowApiSettings(false)} className="btn-ghost text-sm">取消</button>
-            </div>
-            <p className="text-xs text-gray-400 mt-3 text-center">
-              你的 API Key 仅存储在本地浏览器
-            </p>
-          </div>
-        </div>
-      )}
+      {/* AI 接口设置 */}
+      <ApiSettingsModal
+        open={showApiSettings}
+        onClose={() => setShowApiSettings(false)}
+        onSaved={() => { setApiVersion(v => v + 1); setSendError(null) }}
+      />
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -333,8 +320,8 @@ export default function AIChat() {
             <MascotAvatar size={72} />
             <h3 className="text-lg font-bold text-gray-800 mt-4 mb-2">和我聊聊灵感吧！</h3>
             <p className="text-gray-400 text-sm mb-6">
-              我是小灵儿，你的灵感伙伴～
-              <br />无论你是卡住了、无聊了、还是有很多想法，都可以和我说说
+              我是小灵儿，只陪你聊灵感这件事～
+              <br />卡住了、没方向、有想法想理一理，都可以和我说
             </p>
 
             {/* 话题建议 */}
@@ -352,10 +339,10 @@ export default function AIChat() {
             {/* 快捷入口 */}
             <div className="grid grid-cols-2 gap-2 w-full mt-4">
               {[
-                { emoji: '😴', label: '最近没什么灵感...' },
                 { emoji: '💭', label: '我脑子里有个想法' },
-                { emoji: '😰', label: '感到有点焦虑' },
+                { emoji: '😴', label: '最近没什么灵感' },
                 { emoji: '🔍', label: '帮我梳理一下思路' },
+                { emoji: '🚀', label: '我想做点新东西' },
               ].map(({ emoji, label }) => (
                 <button
                   key={label}
@@ -368,12 +355,12 @@ export default function AIChat() {
               ))}
             </div>
 
-            {!hasApiKey() && (
+            {!apiReady && (
               <button
                 onClick={() => setShowApiSettings(true)}
                 className="mt-6 text-sm text-primary-500 underline hover:text-primary-600"
               >
-                使用前请先配置你自己的 DeepSeek API Key
+                使用前请先接入你自己的 AI 接口
               </button>
             )}
           </div>
@@ -409,6 +396,29 @@ export default function AIChat() {
           ))
         )}
 
+        {/* 发送失败 */}
+        {sendError && (
+          <div className="flex justify-start">
+            <div className="flex items-end gap-2 max-w-[85%]">
+              <MascotAvatar size={32} />
+              <div className="px-4 py-3 rounded-2xl bg-red-50 border border-red-100 rounded-bl-md text-sm text-red-600">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p>{sendError}</p>
+                    <div className="flex gap-3 mt-1.5">
+                      {lastFailed && (
+                        <button onClick={handleRetry} className="text-xs underline hover:text-red-700">重试</button>
+                      )}
+                      <button onClick={() => setShowApiSettings(true)} className="text-xs underline hover:text-red-700">检查设置</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 加载状态 */}
         {loading && (
           <div className="flex justify-start">
@@ -434,9 +444,11 @@ export default function AIChat() {
           <textarea
             ref={inputRef}
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value.slice(0, 1000))}
             onKeyDown={handleKeyDown}
-            placeholder="和你的小灵儿说点什么..."
+            placeholder="聊聊你的灵感、想法或正在做的东西..."
+            maxLength={1000}
+            aria-label="输入消息"
             className="flex-1 resize-none rounded-2xl border border-beige-300/40 bg-beige-50/50 px-4 py-3 text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-200 max-h-32"
             rows={2}
             disabled={loading}
@@ -444,14 +456,22 @@ export default function AIChat() {
           <button
             onClick={handleSend}
             disabled={!input.trim() || loading}
+            aria-label="发送"
             className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0 shadow-lg shadow-primary-500/20"
           >
             <Send size={18} />
           </button>
         </div>
-        <p className="text-[10px] text-gray-300 mt-2 text-center">
-          Enter 发送 · Shift+Enter 换行
-        </p>
+        <div className="flex items-center justify-between mt-2 px-1">
+          <p className="text-[10px] text-gray-300">
+            Enter 发送 · Shift+Enter 换行
+          </p>
+          {input.length > 800 && (
+            <span className={`text-[10px] ${input.length >= 1000 ? 'text-red-400' : 'text-gray-300'}`}>
+              {input.length}/1000
+            </span>
+          )}
+        </div>
       </div>
     </main>
   )

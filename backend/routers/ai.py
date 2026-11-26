@@ -1,15 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from database import supabase
 from schemas import APIResponse
+from auth_utils import get_current_user
 from services.ai_service import generate_wakeup_message, find_related_inspirations
 from services.match_service import get_suggested_matches, calculate_match_score
 
 router = APIRouter(prefix="/ai", tags=["AI智能体"])
 
 
-@router.get("/wakeup/{user_id}", response_model=APIResponse)
-async def get_wakeup_reminders(user_id: str):
-    """获取待唤醒的灵感提醒"""
+@router.get("/wakeup", response_model=APIResponse)
+async def get_wakeup_reminders(user_id: str = Depends(get_current_user)):
+    """获取待唤醒的灵感提醒（当前用户）"""
     r = supabase.table("wakeup_reminders") \
         .select("*, inspirations!inner(id, title, content, tags, created_at)") \
         .eq("user_id", user_id) \
@@ -46,8 +47,11 @@ async def get_wakeup_reminders(user_id: str):
 
 
 @router.get("/related/{inspiration_id}", response_model=APIResponse)
-async def get_related_inspirations(inspiration_id: str):
-    """获取与当前灵感相关的历史灵感"""
+async def get_related_inspirations(
+    inspiration_id: str,
+    user_id: str = Depends(get_current_user),
+):
+    """获取与当前灵感相关的历史灵感（仅本人）"""
     # 获取当前灵感
     current_r = supabase.table("inspirations") \
         .select("*") \
@@ -58,7 +62,8 @@ async def get_related_inspirations(inspiration_id: str):
         raise HTTPException(status_code=404, detail="灵感不存在")
 
     current = current_r.data
-    user_id = current["user_id"]
+    if current["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="无权查看他人的灵感关联")
 
     # 获取该用户的其他灵感
     old_r = supabase.table("inspirations") \
@@ -90,9 +95,9 @@ async def get_related_inspirations(inspiration_id: str):
     return APIResponse(data={"items": items})
 
 
-@router.get("/matches/{user_id}", response_model=APIResponse)
-async def get_user_matches(user_id: str):
-    """获取同频用户推荐"""
+@router.get("/matches", response_model=APIResponse)
+async def get_user_matches(user_id: str = Depends(get_current_user)):
+    """获取同频用户推荐（当前用户）"""
     matches = await get_suggested_matches(user_id)
 
     # 补充用户信息

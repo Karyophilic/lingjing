@@ -103,7 +103,7 @@ function generateStars(count) {
   return stars
 }
 
-// AI 连线只使用用户自己的 DeepSeek API Key
+// AI 连线只使用用户自己的接口配置
 
 // SVG 连线
 function ConnectionLines({ planets, selectedIds }) {
@@ -204,7 +204,7 @@ export default function Universe() {
       const result = await analyzeInspirationConnections(selectedInsp)
       setAnalysis(result)
     } catch (e) {
-      setAnalysis(`⚠️ AI 分析失败：${e.message || '请检查 DeepSeek API Key 与额度'}`)
+      setAnalysis(`⚠️ AI 分析失败：${e.message || '请检查 AI 接口配置'}`)
     } finally {
       setAnalyzing(false)
       exitSelectMode()
@@ -421,7 +421,7 @@ export default function Universe() {
                   className="ml-3 px-4 py-1.5 rounded-full text-white font-semibold text-sm transition-all active:scale-95 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #5B9BD5, #6C5CE7)' }}
                 >
-                  {analyzing ? '分析中...' : hasApiKey() ? '✨ 确认连线' : '需要 API Key'}
+                  {analyzing ? '分析中...' : hasApiKey() ? '✨ 确认连线' : '需要接入 AI'}
                 </button>
               )}
               <button onClick={exitSelectMode} className="ml-2 p-1.5 hover:bg-white/10 rounded-full transition-colors">
@@ -445,7 +445,7 @@ export default function Universe() {
             >
               <Link2 size={18} /> 灵感联络
               <span className="text-xs opacity-70 ml-1">
-                ({hasApiKey() ? 'API Key 已配置' : '需要 API Key'})
+                ({hasApiKey() ? 'AI 已接入' : '需要接入 AI'})
               </span>
             </button>
           )}
@@ -513,12 +513,12 @@ export default function Universe() {
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl text-white text-sm text-center animate-bounce-in"
           style={{ background: 'rgba(255,140,105,0.2)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,140,105,0.3)' }}
         >
-          <p>AI 连线需要你自己的 DeepSeek API Key</p>
+          <p>AI 连线需要先接入你自己的 AI 接口</p>
           <button
             onClick={() => navigate('/ai-chat?settings=api')}
             className="mt-2 text-xs underline opacity-90 hover:opacity-100"
           >
-            去配置 API Key →
+            去配置 AI 接口 →
           </button>
         </div>
       )}

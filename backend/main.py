@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from config import CORS_ORIGINS
 from routers import auth, inspirations, ai
 
 app = FastAPI(
@@ -8,10 +9,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS 配置（允许前端跨域）
+# CORS 配置（允许前端跨域，来源可通过 CORS_ORIGINS 环境变量覆盖）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

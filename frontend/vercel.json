@@ -1,3 +1,4 @@
 {
+  "name": "lingjing",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

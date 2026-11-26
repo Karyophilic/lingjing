@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
-import { localInspirations, localAuth } from '../api/local'
+import { localInspirations, localAuth, exportBackup, importBackup } from '../api/local'
+import { getConfigSummary } from '../api/aiConfig'
 import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
-import { Plus, Search, Edit3, Check, X, TrendingUp, Clock, FileText, Heart, Tag as TagIcon, Archive, Phone, Mail } from 'lucide-react'
+import ApiSettingsModal from '../components/ApiSettingsModal'
+import { Plus, Search, Edit3, Check, X, TrendingUp, Clock, FileText, Heart, Tag as TagIcon, Archive, Phone, Mail, Key, Settings, Download, Upload } from 'lucide-react'
 
 export default function Profile() {
   const { user } = useAuth()
@@ -19,6 +21,10 @@ export default function Profile() {
   const [page, setPage] = useState(1)
 
   const [profile, setProfile] = useState(null)
+  const [showAiSettings, setShowAiSettings] = useState(false)
+  const [aiVersion, setAiVersion] = useState(0)
+  const [backupMsg, setBackupMsg] = useState('')
+  const fileRef = useRef(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [editBio, setEditBio] = useState('')
   const [editUsername, setEditUsername] = useState('')
@@ -67,6 +73,37 @@ export default function Profile() {
     setEditingProfile(false)
     loadData()
     window.location.reload()
+  }
+
+  const aiSummary = getConfigSummary()
+
+  const handleExport = () => {
+    try {
+      const blob = new Blob([exportBackup()], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `lingjing-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setBackupMsg('已导出备份文件')
+    } catch {
+      setBackupMsg('导出失败，请稍后再试')
+    }
+  }
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!window.confirm('导入会覆盖当前浏览器里的全部数据，确定继续吗？')) return
+    const text = await file.text()
+    const res = importBackup(text)
+    if (res.success) {
+      window.location.reload()
+    } else {
+      setBackupMsg(res.message)
+    }
   }
 
   const currentList = tab === 'archived' ? archivedInspirations : inspirations
@@ -203,6 +240,61 @@ export default function Profile() {
         </div>
       )}
 
+      {/* AI 接口设置 */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+              <Key size={18} className="text-primary-500" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800 text-sm">AI 接口</h3>
+              <p className="text-xs text-gray-400">
+                {aiSummary.usingBuiltin
+                  ? `站点内置接口 · ${aiSummary.model}`
+                  : aiSummary.configured
+                    ? `已接入 ${aiSummary.model} · ${aiSummary.masked}`
+                    : '未配置，AI 对话、打标、唤醒都不可用'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAiSettings(true)}
+            className="btn-ghost text-sm flex items-center gap-1"
+          >
+            <Settings size={14} /> {aiSummary.configured ? '管理' : '配置'}
+          </button>
+        </div>
+      </div>
+
+      {/* 本地数据备份 */}
+      <div className="card mb-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-gray-800 text-sm">本地数据备份</h3>
+            <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+              灵感和账号都存在当前浏览器里，换设备或清缓存会丢失，建议定期导出。
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <button onClick={handleExport} className="btn-ghost text-sm flex items-center gap-1.5 flex-1 justify-center">
+            <Download size={14} /> 导出备份
+          </button>
+          <button onClick={() => fileRef.current?.click()} className="btn-ghost text-sm flex items-center gap-1.5 flex-1 justify-center">
+            <Upload size={14} /> 导入备份
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImport}
+          />
+        </div>
+        {backupMsg && <p className="text-[11px] text-primary-500 mt-2">{backupMsg}</p>}
+      </div>
+
       {/* 标签切换 */}
       <div className="flex items-center gap-2 mb-4">
         <button onClick={() => { setTab('active'); setPage(1); setSearch('') }}
@@ -266,6 +358,12 @@ export default function Profile() {
       {showCreate && (
         <CreateInspiration onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); loadData() }} />
       )}
+
+      <ApiSettingsModal
+        open={showAiSettings}
+        onClose={() => setShowAiSettings(false)}
+        onSaved={() => setAiVersion(v => v + 1)}
+      />
     </main>
   )
 }

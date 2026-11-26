@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from database import supabase
+from auth_utils import get_current_user
 from schemas import (
     InspirationCreate, InspirationUpdate, InspirationOut,
     CommentCreate, CommentOut, APIResponse,
@@ -62,7 +63,11 @@ async def _enrich_inspirations(inspirations: list[dict]) -> list[dict]:
 
 
 @router.post("", response_model=APIResponse)
-async def create_inspiration(data: InspirationCreate, background_tasks: BackgroundTasks):
+async def create_inspiration(
+    data: InspirationCreate,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user),
+):
     """创建灵感 — 自动触发 AI 打标 + 嵌入向量生成 + 遗忘唤醒计划"""
     # 1. AI 自动打标
     ai_result = await auto_tag_inspiration(data.title, data.content)
@@ -74,7 +79,7 @@ async def create_inspiration(data: InspirationCreate, background_tasks: Backgrou
 
     # 3. 写入灵感
     r = supabase.table("inspirations").insert({
-        "user_id": data.user_id if hasattr(data, "user_id") else None,
+        "user_id": user_id,
         "title": data.title,
         "content": data.content,
         "content_type": data.content_type,
@@ -146,7 +151,11 @@ async def _check_related(inspiration: dict):
 
 
 @router.get("/my", response_model=APIResponse)
-async def list_my_inspirations(user_id: str, page: int = 1, limit: int = 20):
+async def list_my_inspirations(
+    page: int = 1,
+    limit: int = 20,
+    user_id: str = Depends(get_current_user),
+):
     """获取我的灵感列表"""
     offset = (page - 1) * limit
     r = supabase.table("inspirations") \
@@ -173,8 +182,20 @@ async def get_inspiration(inspiration_id: str):
 
 
 @router.put("/{inspiration_id}", response_model=APIResponse)
-async def update_inspiration(inspiration_id: str, data: InspirationUpdate):
-    """更新灵感"""
+async def update_inspiration(
+    inspiration_id: str,
+    data: InspirationUpdate,
+    user_id: str = Depends(get_current_user),
+):
+    """更新灵感（仅本人）"""
+    owner = supabase.table("inspirations") \
+        .select("user_id") \
+        .eq("id", inspiration_id).single().execute()
+    if not owner.data:
+        raise HTTPException(status_code=404, detail="灵感不存在")
+    if owner.data["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="无权修改他人的灵感")
+
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if update_data:
         supabase.table("inspirations").update(update_data).eq("id", inspiration_id).execute()
@@ -185,8 +206,19 @@ async def update_inspiration(inspiration_id: str, data: InspirationUpdate):
 
 
 @router.delete("/{inspiration_id}", response_model=APIResponse)
-async def delete_inspiration(inspiration_id: str):
-    """删除灵感"""
+async def delete_inspiration(
+    inspiration_id: str,
+    user_id: str = Depends(get_current_user),
+):
+    """删除灵感（仅本人）"""
+    owner = supabase.table("inspirations") \
+        .select("user_id") \
+        .eq("id", inspiration_id).single().execute()
+    if not owner.data:
+        raise HTTPException(status_code=404, detail="灵感不存在")
+    if owner.data["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="无权删除他人的灵感")
+
     supabase.table("inspirations").delete().eq("id", inspiration_id).execute()
     return APIResponse(message="灵感已删除")
 
@@ -240,7 +272,10 @@ async def search_inspirations(query: str, limit: int = 20):
 # 互动：点赞 & 评论
 # ============================================
 @router.post("/{inspiration_id}/like", response_model=APIResponse)
-async def like_inspiration(inspiration_id: str, user_id: str):
+async def like_inspiration(
+    inspiration_id: str,
+    user_id: str = Depends(get_current_user),
+):
     """点赞/取消点赞"""
     existing = supabase.table("inspiration_likes") \
         .select("id") \
@@ -287,7 +322,11 @@ async def list_comments(inspiration_id: str):
 
 
 @router.post("/{inspiration_id}/comments", response_model=APIResponse)
-async def create_comment(inspiration_id: str, user_id: str, data: CommentCreate):
+async def create_comment(
+    inspiration_id: str,
+    data: CommentCreate,
+    user_id: str = Depends(get_current_user),
+):
     """发表评论"""
     r = supabase.table("comments").insert({
         "user_id": user_id,

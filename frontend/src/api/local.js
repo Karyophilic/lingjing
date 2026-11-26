@@ -3,7 +3,7 @@
 // P3: DeepSeek集成、手机/邮箱注册、游客模式、私信、多轮对话
 // ============================================
 
-import { chatWithXiaolinger, generateTags, generateWakeupMessage, hasApiKey } from './deepseek'
+import { chatWithXiaolinger, generateTags, generateWakeupMessage, hasApiKey, friendlyErrorMessage } from './deepseek'
 
 const STORAGE_KEY = 'lingjing_data'
 const SEED_VERSION = 3
@@ -44,18 +44,19 @@ function migrateDB(db) {
   })
   // Convert old flat aiChats to conversation-based
   if (db.aiChats) {
-    for (const [uid, msgs] of Object.entries(db.aiChats)) {
-      if (Array.isArray(msgs) && msgs.length > 0 && !msgs[0]?.role) {
-        // Already converted (conversation-based)
-      } else if (Array.isArray(msgs)) {
-        db.aiChats[uid] = [{
-          chatId: uid(),
-          title: '历史对话',
-          messages: msgs,
-          createdAt: msgs[0]?.time || now(),
-          updatedAt: msgs[msgs.length - 1]?.time || now(),
-        }]
-      }
+    for (const [chatKey, msgs] of Object.entries(db.aiChats)) {
+      if (!Array.isArray(msgs)) { delete db.aiChats[chatKey]; continue }
+      if (msgs.length === 0) continue // 空列表无需迁移
+      const first = msgs[0]
+      // 已是会话结构（对象里带 chatId），跳过；否则是旧版扁平消息
+      if (first && typeof first === 'object' && 'chatId' in first) continue
+      db.aiChats[chatKey] = [{
+        chatId: uid(),
+        title: '历史对话',
+        messages: msgs.filter(m => m && typeof m === 'object'),
+        createdAt: first?.time || now(),
+        updatedAt: msgs[msgs.length - 1]?.time || now(),
+      }]
     }
   }
   if (!db.currentUserId) db.currentUserId = null
@@ -79,6 +80,34 @@ function migrateDB(db) {
 }
 
 function saveDB(db) { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)) }
+
+// ===== 数据备份：本地存储的导出 / 导入 =====
+export function exportBackup() {
+  const db = loadDB()
+  return JSON.stringify({
+    app: 'lingjing',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: db,
+  }, null, 2)
+}
+
+export function importBackup(text) {
+  try {
+    const parsed = JSON.parse(text)
+    const db = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed
+    if (!db || typeof db !== 'object' || !Array.isArray(db.inspirations)) {
+      return { success: false, message: '文件格式不正确，需要是灵境导出的备份文件。' }
+    }
+    if (!db.users || typeof db.users !== 'object') {
+      return { success: false, message: '备份缺少用户数据，无法导入。' }
+    }
+    saveDB(migrateDB(db))
+    return { success: true }
+  } catch {
+    return { success: false, message: '文件不是有效的 JSON。' }
+  }
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8) }
 function now() { return new Date().toISOString() }
 function simpleHash(str) { let h = 0; for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0 }; return 'h' + Math.abs(h).toString(36) }
@@ -263,14 +292,17 @@ export const localAI = {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return []
     const chats = db.aiChats[u.id] || []
-    return chats.map(c => ({
-      chatId: c.chatId,
-      title: c.title || '新对话',
-      preview: c.messages?.length > 0 ? c.messages[c.messages.length - 1].content.slice(0, 30) : '',
-      messageCount: c.messages?.length || 0,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-    })).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    return chats.filter(c => (c.messages?.length || 0) > 0).map(c => {
+      const last = c.messages[c.messages.length - 1]
+      return {
+        chatId: c.chatId,
+        title: c.title || '新对话',
+        preview: typeof last?.content === 'string' ? last.content.slice(0, 30) : '',
+        messageCount: c.messages.length,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      }
+    }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
   },
 
   /** 获取某个对话的消息 */
@@ -296,7 +328,7 @@ export const localAI = {
   async sendChatMessage(chatId, content) {
     const db = loadDB(); const u = localAuth.getCurrentUser()
     if (!u) return { success: false, message: '未登录' }
-    if (!hasApiKey()) return { success: false, code: 'NO_API_KEY', message: '请先配置 DeepSeek API Key' }
+    if (!hasApiKey()) return { success: false, code: 'NO_API_KEY', message: '请先接入 AI 接口' }
     if (!db.aiChats[u.id]) db.aiChats[u.id] = []
 
     let chat = db.aiChats[u.id].find(c => c.chatId === chatId)
@@ -309,21 +341,40 @@ export const localAI = {
     chat.messages.push(userMsg)
     chat.updatedAt = now()
 
-    // 更新标题（用第一条用户消息）
-    if (chat.messages.filter(m => m.role === 'user').length === 1 && content.length <= 20) {
-      chat.title = content
+    // 更新标题（用第一条用户消息），超长时截断
+    if (chat.messages.filter(m => m.role === 'user').length === 1) {
+      chat.title = content.length > 20 ? content.slice(0, 20) + '…' : content
     }
 
-    // 只使用用户自己的 DeepSeek API Key
+    // 只使用用户自己的 API Key，失败时不把错误信息写进对话记录
     let aiContent = null
+    let aiError = null
     try {
       const myInsp = db.inspirations.filter(i => i.user_id === u.id && !i.is_archived)
       const history = chat.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
       aiContent = await chatWithXiaolinger(content, history, myInsp.slice(0, 5))
     } catch (e) {
-      aiContent = `⚠️ API 调用失败：${e.message || '请检查 DeepSeek API Key 与额度'}`
+      console.error('AI 调用失败：', e)
+      aiError = friendlyErrorMessage(e)
     }
-    if (!aiContent) aiContent = '⚠️ 没有收到回复，请检查 API Key 或稍后再试。'
+
+    if (aiError || !aiContent) {
+      // 回滚这条用户消息，避免重试时重复写入
+      chat.messages.pop()
+      chat.updatedAt = now()
+      // 本轮新建的空对话直接移除，避免历史里堆积空会话
+      if (chat.messages.length === 0) {
+        const idx = (db.aiChats[u.id] || []).findIndex(c => c.chatId === chat.chatId)
+        if (idx !== -1) db.aiChats[u.id].splice(idx, 1)
+      }
+      saveDB(db)
+      return {
+        success: false,
+        code: 'AI_ERROR',
+        message: aiError || '没有收到回复，请稍后再试。',
+        data: { chatId: chat.chatId, userMsg },
+      }
+    }
 
     const aiMsg = { role: 'assistant', content: aiContent, time: now() }
     chat.messages.push(aiMsg)

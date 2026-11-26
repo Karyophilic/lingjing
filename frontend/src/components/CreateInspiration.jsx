@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X, Send, Mic, MicOff, Image as ImageIcon, Trash2 } from 'lucide-react'
 import { localInspirations } from '../api/local'
 import { hasApiKey } from '../api/deepseek'
 
 export default function CreateInspiration({ onClose, onCreated }) {
+  const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [contentType, setContentType] = useState('text')
@@ -264,7 +266,14 @@ export default function CreateInspiration({ onClose, onCreated }) {
 
           {!hasApiKey() && (
             <p className="text-[11px] text-gray-400 mb-3">
-              未配置 API Key，本次不会调用 AI 打标，保存后会使用默认标签。
+              未接入 AI 接口，本次会使用默认标签。
+              <button
+                type="button"
+                onClick={() => navigate('/ai-chat?settings=api')}
+                className="text-primary-500 underline ml-1"
+              >
+                去配置
+              </button>
             </p>
           )}
 
