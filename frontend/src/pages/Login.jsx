@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../stores/auth'
 import { ArrowRight, User, Lock, LogIn, UserPlus, Phone, Mail } from 'lucide-react'
-import { DoodleStar, DoodleLeaf, DoodleCat } from '../components/Doodle'
+import { DoodleStar, DoodleLeaf, DoodleLing } from '../components/Doodle'
 
 export default function Login() {
   const { login, register, loginAsGuest } = useAuth()
@@ -72,7 +72,7 @@ export default function Login() {
         {/* 手绘封面 */}
         <div className="text-center mb-7">
           <div className="mx-auto w-16 h-16 rounded-full bg-paper-50 border border-ink-700/35 grid place-items-center mb-4 shadow-[2px_3px_0_rgba(74,74,66,0.08)]">
-            <DoodleCat className="w-10 h-10 text-ink-700" />
+            <DoodleLing className="w-10 h-10 text-ink-700" />
           </div>
           <p className="eyebrow">LINGJING · TRAVEL BOOK</p>
           <h1 className="text-[38px] leading-none mt-1 text-ink-800">灵境</h1>
@@ -175,7 +175,7 @@ export default function Login() {
             disabled={loading}
             className="btn-ghost inline-flex items-center gap-1.5 px-5 py-2.5 text-sm"
           >
-            <DoodleCat className="w-4 h-4" />
+            <DoodleLing className="w-4 h-4" />
             游客模式浏览
           </button>
           <p className="text-xs text-ink-400 mt-2">

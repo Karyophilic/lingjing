@@ -203,3 +203,20 @@ export function DoodleNote({ className = 'w-6 h-6' }) {
     </svg>
   )
 }
+
+// 小灵儿 — 原始圆球形象的涂鸦版
+export function DoodleLing({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      <path
+        d="M24 6.5 C 34.5 5.6 41.5 13 42.2 22.6 C 43 33 35.5 41.4 24.6 42 C 13.5 42.6 5.8 34.6 6 24 C 6.2 13 13.8 7.2 24 6.5 Z"
+        fill="#DCE9EF" fillOpacity="0.85" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"
+      />
+      <path d="M17.6 20.6 C 18.4 17.8 21.8 17.7 22.9 20.2 C 23.9 22.7 22.1 25.3 19.9 24.9 C 18.1 24.5 17 22.8 17.6 20.6 Z" fill="currentColor" />
+      <path d="M28.8 19.6 C 30.2 17.4 33.1 17.8 34 20.3 C 34.9 22.8 33 25.3 30.9 24.8 C 29.2 24.4 28.1 21.8 28.8 19.6 Z" fill="currentColor" />
+      <path d="M13.8 27.6 q 3 -2.4 5.2 0 M30.4 27.4 q 2.8 -2.4 5 0" stroke="#C98F7B" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M23.6 29.2 q 3.2 2.6 6.4 0" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <path d="M35.6 9.4 l 1.8 4.6 l 4.8 1.1 l -3.8 3.7 l 0.9 4.9 l -3.9 -3" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.5" />
+    </svg>
+  )
+}

@@ -1,4 +1,4 @@
-// 首页手绘插画 — 小灵儿的灵感书桌（原创场景，不复刻参考图）
+// 首页手绘插画 — 小灵儿与灵感书桌（全部用不规则路径，不使用标准几何图形）
 export default function HeroSketch({ className = '' }) {
   return (
     <svg
@@ -7,121 +7,130 @@ export default function HeroSketch({ className = '' }) {
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
-      {/* 水彩底 */}
-      <ellipse cx="210" cy="360" rx="230" ry="92" fill="#A9B79A" opacity="0.12" />
-      <ellipse cx="640" cy="350" rx="190" ry="86" fill="#A9C6D8" opacity="0.12" />
-      <ellipse cx="430" cy="300" rx="180" ry="70" fill="#E6DCC6" opacity="0.18" />
+      {/* 水彩底 — 不规则晕染 */}
+      <path d="M-50 200 C 40 138 168 164 228 240 C 288 316 214 424 108 436 C 0 448 -72 336 -50 200 Z" fill="#A9B79A" fillOpacity="0.1" />
+      <path d="M520 84 C 650 66 802 138 812 262 C 822 386 690 434 596 392 C 502 350 466 214 520 84 Z" fill="#A9C6D8" fillOpacity="0.11" />
+      <path d="M248 300 C 380 278 522 298 544 360 C 566 422 420 452 318 430 C 216 408 176 338 248 300 Z" fill="#E6DCC6" fillOpacity="0.18" />
 
       {/* 漂浮的小涂鸦 */}
-      <g fill="none" stroke="#4A4A42" strokeOpacity="0.42" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M110 156 q 8 -13 21 -6 q 8 -9 19 -2 q 10 -1 10 8 q -1 6 -12 6 l -31 0 q -9 0 -7 -6 Z" />
-        <path d="M648 132 q 7 -10 18 -4 q 6 -7 15 -1 q 8 0 8 7 q -1 5 -10 5 l -26 0 q -7 0 -5 -7 Z" />
-        <path d="M712 176 l 6 16 l 18 3 l -14 12 l 4 17 l -14 -10 l -15 10 l 4 -17 l -14 -12 l 18 -3 Z" stroke="#8B5E4A" />
-        <path d="M76 260 l 4 10 l 10 2 l -8 8 l 2 10 l -8 -6 l -9 6 l 2 -10 l -8 -8 l 10 -2 Z" strokeOpacity="0.3" />
-        <path d="M740 250 q 16 -8 28 6" strokeOpacity="0.35" />
-        <path d="M748 236 l 20 -14 l -4 14 l 14 2 l -20 14 Z" strokeOpacity="0.35" />
+      <g fill="none" stroke="#4A4A42" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path transform="translate(20 0)" d="M104 146 C 116 132 134 134 140 146 C 152 140 166 146 166 158 C 176 160 178 170 168 174 C 156 179 138 177 128 172 C 116 178 104 172 104 162 C 96 158 98 150 104 146 Z" />
+        <path transform="translate(-60 0)" d="M736 118 L 741 132 L 756 135 L 744 146 L 747 161 L 736 152 L 725 161 L 728 146 L 716 135 L 731 132 Z" stroke="#8B5E4A" strokeOpacity="0.7" />
+        <path d="M762 196 L 782 188 L 774 200 L 786 204 L 766 212 Z" strokeOpacity="0.3" />
+        <path d="M424 152 l 3 8 l 8 1 l -6 6 l 2 8 l -7 -5 l -7 5 l 2 -8 l -6 -6 l 8 -1 Z" strokeOpacity="0.3" />
+        <path d="M330 126 q 14 -8 26 4" strokeOpacity="0.25" />
       </g>
 
       {/* 桌面 */}
-      <path d="M40 402 C 160 392 300 406 430 396 C 560 386 680 400 760 392" fill="none" stroke="#4A4A42" strokeOpacity="0.6" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M80 414 q 30 -3 60 0 M320 412 q 26 -3 52 0 M590 406 q 28 -3 56 0" fill="none" stroke="#4A4A42" strokeOpacity="0.22" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M38 402 C 158 390 300 408 430 398 C 560 388 682 402 762 392" fill="none" stroke="#4A4A42" strokeOpacity="0.55" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M78 414 q 30 -3 60 0 M320 412 q 26 -3 52 0 M590 406 q 28 -3 56 0" fill="none" stroke="#4A4A42" strokeOpacity="0.2" strokeWidth="1.2" strokeLinecap="round" />
 
-      {/* 便签 */}
-      <g transform="rotate(-7 143 256)">
-        <rect x="95" y="214" width="96" height="84" rx="3" fill="#DCE9EF" stroke="#4A4A42" strokeOpacity="0.55" strokeWidth="1.6" />
-        <path d="M110 236 q 30 -4 62 0 M110 252 q 24 -3 50 0 M110 268 q 30 -3 56 0" fill="none" stroke="#4A4A42" strokeOpacity="0.35" strokeWidth="1.3" strokeLinecap="round" />
-        <path d="M142 283 l 4 10 l 11 1 l -9 7 l 3 11 l -9 -7 l -9 7 l 3 -11 l -9 -7 l 11 -1 Z" fill="none" stroke="#8B5E4A" strokeOpacity="0.65" strokeWidth="1.2" />
+      {/* 左侧便签 — 右下角卷起 */}
+      <g transform="translate(20 0)">
+      <path
+        d="M96 216 C 126 207 160 210 188 218 C 192 244 189 274 183 298 C 176 301 168 302 160 301 C 162 296 160 292 156 290 C 138 294 118 292 98 288 C 92 264 92 238 96 216 Z"
+        fill="#DCE9EF" stroke="#4A4A42" strokeOpacity="0.5" strokeWidth="1.6" strokeLinejoin="round"
+      />
+      <path d="M110 238 q 30 -4 60 0 M110 254 q 26 -3 52 0 M110 270 q 28 -3 54 0" fill="none" stroke="#4A4A42" strokeOpacity="0.32" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M142 282 l 4 9 l 10 1 l -8 7 l 3 10 l -9 -6 l -9 6 l 3 -10 l -8 -7 l 10 -1 Z" fill="none" stroke="#8B5E4A" strokeOpacity="0.6" strokeWidth="1.2" />
       </g>
-      <g transform="rotate(6 693 238)">
-        <rect x="650" y="198" width="88" height="78" rx="3" fill="#EBD8CB" stroke="#4A4A42" strokeOpacity="0.55" strokeWidth="1.6" />
-        <path d="M665 220 q 26 -3 54 0 M665 236 q 30 -3 58 0 M665 252 q 18 -3 38 0" fill="none" stroke="#4A4A42" strokeOpacity="0.35" strokeWidth="1.3" strokeLinecap="round" />
+
+      {/* 右侧便签 */}
+      <g transform="translate(-60 0)">
+      <path
+        d="M692 154 C 714 148 740 150 758 156 C 761 174 759 192 754 208 C 736 212 716 210 698 206 C 694 190 692 172 692 154 Z"
+        fill="#EBD8CB" stroke="#4A4A42" strokeOpacity="0.5" strokeWidth="1.6" strokeLinejoin="round"
+      />
+      <path d="M704 174 q 24 -3 46 0 M704 188 q 28 -3 50 0 M704 202 q 16 -2 34 0" fill="none" stroke="#4A4A42" strokeOpacity="0.3" strokeWidth="1.2" strokeLinecap="round" />
       </g>
 
       {/* 书堆 */}
-      <g fill="none" stroke="#4A4A42" strokeOpacity="0.55" strokeWidth="1.6" strokeLinejoin="round">
-        <rect x="188" y="368" width="180" height="14" fill="#A9B79A" fillOpacity="0.4" />
-        <rect x="198" y="354" width="158" height="14" fill="#E6DCC6" fillOpacity="0.7" />
-        <path d="M210 375 q 40 -2 80 0 M210 361 q 40 -2 80 0" strokeOpacity="0.2" />
+      <path d="M178 370 C 230 363 292 366 366 368 C 370 374 369 380 366 384 C 300 387 238 385 176 382 C 174 378 175 374 178 370 Z" fill="#A9B79A" fillOpacity="0.4" stroke="#4A4A42" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M190 356 C 240 349 298 352 358 354 C 361 360 360 366 357 369 C 300 371 242 370 188 367 C 187 363 188 359 190 356 Z" fill="#E6DCC6" fillOpacity="0.75" stroke="#4A4A42" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M210 375 q 40 -2 80 0 M210 361 q 40 -2 80 0" fill="none" stroke="#4A4A42" strokeOpacity="0.18" strokeWidth="1.1" strokeLinecap="round" />
+
+      {/* 摊开的笔记本 — 不规则页边 */}
+      <g fill="none" stroke="#4A4A42" strokeLinejoin="round" strokeLinecap="round">
+        <path d="M210 300 C 260 292 330 288 390 290 C 389 330 386 370 382 406 C 330 412 266 415 200 416 C 205 378 207 338 210 300 Z" fill="#FBF7EC" strokeOpacity="0.7" strokeWidth="1.9" />
+        <path d="M392 290 C 444 294 500 300 548 306 C 544 344 538 380 532 416 C 480 414 430 410 382 406 C 384 368 388 330 392 290 Z" fill="#FBF7EC" strokeOpacity="0.7" strokeWidth="1.9" />
+        <path d="M390 290 C 388 330 386 370 382 406" strokeOpacity="0.45" strokeWidth="1.3" />
+        <path d="M228 322 C 268 316 324 313 372 314 M225 344 C 266 338 322 335 370 336 M222 366 C 264 360 318 357 366 358" strokeOpacity="0.24" strokeWidth="1.2" />
+        <path d="M404 320 C 442 322 490 326 528 330 M402 342 C 440 344 486 348 524 352 M400 364 C 436 366 478 370 516 374" strokeOpacity="0.24" strokeWidth="1.2" />
+        <path d="M462 382 l 4 10 l 11 1 l -9 7 l 3 11 l -9 -7 l -9 7 l 3 -11 l -9 -7 l 11 -1 Z" stroke="#8B5E4A" strokeOpacity="0.55" strokeWidth="1.3" />
+        <path d="M418 390 q 3 4 -1 8 M424 388 q 4 3 3 8" strokeOpacity="0.3" strokeWidth="1.1" />
       </g>
 
-      {/* 摊开的笔记本 */}
-      <g fill="none" stroke="#4A4A42" strokeWidth="1.9" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M222 300 L392 290 L382 406 L206 416 Z" fill="#FBF7EC" strokeOpacity="0.75" />
-        <path d="M392 290 L548 306 L532 416 L382 406 Z" fill="#FBF7EC" strokeOpacity="0.75" />
-        <path d="M392 290 L382 406" strokeOpacity="0.5" strokeWidth="1.4" />
-        <path d="M238 322 q 44 -6 126 -10 M235 344 q 44 -6 128 -10 M232 366 q 42 -6 124 -10" strokeOpacity="0.25" strokeWidth="1.2" />
-        <path d="M408 320 q 44 -4 116 2 M406 342 q 44 -4 118 2 M404 364 q 40 -4 108 2" strokeOpacity="0.25" strokeWidth="1.2" />
-        <path d="M468 356 l 4 10 l 11 1 l -9 7 l 3 11 l -9 -7 l -9 7 l 3 -11 l -9 -7 l 11 -1 Z" stroke="#8B5E4A" strokeOpacity="0.6" strokeWidth="1.3" />
-        <path d="M430 384 l 6 2 M438 380 q 2 5 -2 8" strokeOpacity="0.35" strokeWidth="1.2" />
-      </g>
-
-      {/* 铅笔 */}
-      <g transform="rotate(24 470 350)" fill="none" stroke="#4A4A42" strokeOpacity="0.7" strokeWidth="1.6" strokeLinejoin="round">
-        <rect x="440" y="344" width="74" height="9" fill="#E4C07E" fillOpacity="0.75" />
-        <path d="M514 344 L528 348.5 L514 353 Z" fill="#FBF7EC" />
-        <path d="M440 344 l -12 4.5 l 12 4.5" fill="#E6DCC6" />
-        <path d="M452 344 l 0 9 M462 344 l 0 9" strokeOpacity="0.25" strokeWidth="1" />
+      {/* 铅笔 — 微微弯 */}
+      <g fill="none" stroke="#4A4A42" strokeOpacity="0.65" strokeWidth="1.5" strokeLinejoin="round">
+        <path d="M432 352 C 456 344 492 337 510 337 C 513 341 513 346 510 350 C 492 353 458 360 436 364 C 433 360 431 356 432 352 Z" fill="#E4C07E" fillOpacity="0.75" />
+        <path d="M510 337 C 518 339 524 344 526 350 C 520 351 514 351 510 350 Z" fill="#FBF7EC" />
+        <path d="M432 352 C 428 356 426 360 426 364 C 430 364 434 364 436 364 Z" fill="#E6DCC6" />
+        <path d="M446 349 l 2 10 M456 347 l 2 10" strokeOpacity="0.22" strokeWidth="1" />
       </g>
 
       {/* 茶杯 */}
-      <g fill="none" stroke="#4A4A42" strokeOpacity="0.65" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M105 330 q 0 42 8 50 q 10 9 28 9 q 18 0 26 -9 q 8 -8 8 -50 Z" fill="#F6EBD8" fillOpacity="0.85" />
-        <path d="M175 340 q 19 0 19 15 q 0 15 -19 15" />
-        <path d="M121 318 q 7 -12 0 -24 M140 318 q 7 -12 0 -24" strokeOpacity="0.35" strokeWidth="1.4" />
+      <g transform="translate(30 0)" fill="none" stroke="#4A4A42" strokeOpacity="0.62" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M102 330 C 122 334 152 334 174 330 C 177 350 174 370 166 382 C 150 391 126 391 110 383 C 103 371 100 350 102 330 Z" fill="#F6EBD8" fillOpacity="0.85" />
+        <path d="M174 340 C 190 337 197 347 195 357 C 193 367 183 372 174 370" />
+        <path d="M120 318 q 7 -12 0 -24 M140 318 q 7 -12 0 -24" strokeOpacity="0.33" strokeWidth="1.4" />
       </g>
 
       {/* 植物 */}
-      <g fill="none" stroke="#4A4A42" strokeOpacity="0.65" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M718 366 l 7 38 q 12 8 28 0 l 8 -38 Z" fill="#E6DCC6" fillOpacity="0.8" />
-        <path d="M735 366 q -10 -28 2 -48 M740 366 q 4 -30 18 -42 M732 366 q -22 -18 -28 -34" strokeOpacity="0.5" />
-        <path d="M737 318 q 8 -8 14 -6 M746 330 q 8 -6 14 -3" strokeOpacity="0.3" strokeWidth="1.3" />
+      <g transform="translate(-60 0)" fill="none" stroke="#4A4A42" strokeOpacity="0.62" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M712 366 C 726 362 756 362 770 366 C 768 388 758 404 742 406 C 726 404 716 388 712 366 Z" fill="#E6DCC6" fillOpacity="0.8" />
+        <path d="M742 366 C 730 338 736 316 750 304 C 758 326 756 350 742 366 Z" fill="#A9B79A" fillOpacity="0.25" />
+        <path d="M744 366 C 756 340 772 330 782 332 C 778 352 762 366 744 366 Z" fill="#A9B79A" fillOpacity="0.2" />
+        <path d="M740 366 C 726 350 716 336 716 322 C 730 326 740 342 740 366 Z" fill="#A9B79A" fillOpacity="0.2" />
       </g>
 
-      {/* 小灵儿 — 手绘猫 */}
-      <g fill="none" stroke="#4A4A42" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {/* 小灵儿 — 原始圆球形象的手绘版 */}
+      <g transform="translate(-50 0)">
+        {/* 手绘光圈 */}
+        <path
+          d="M640 198 C 676 195 708 220 710 252 C 712 286 688 312 652 314 C 616 316 590 292 588 260 C 586 228 608 202 640 198 Z"
+          fill="none" stroke="#4A4A42" strokeOpacity="0.18" strokeWidth="1.3" strokeDasharray="3 7"
+        />
         {/* 身体 */}
-        <path d="M566 400 q -20 0 -16 -25 q 4 -25 31 -29 l 38 0 q 27 4 31 29 q 4 25 -16 25 Z" fill="#F6EBD8" fillOpacity="0.9" />
-        <path d="M590 352 q 14 10 28 0" strokeOpacity="0.35" />
-        {/* 尾巴 */}
-        <path d="M664 392 q 34 6 30 26 q -4 15 -24 9" strokeOpacity="0.7" />
-        {/* 头 */}
-        <circle cx="592" cy="318" r="33" fill="#F6EBD8" fillOpacity="0.95" />
-        {/* 耳朵 */}
-        <path d="M566 296 L560 270 L582 284 Z" fill="#F6EBD8" />
-        <path d="M618 296 L624 270 L602 284 Z" fill="#F6EBD8" />
-        {/* 花纹 */}
-        <path d="M578 300 q 7 -5 14 0 M598 297 q 6 -5 12 0" strokeOpacity="0.3" strokeWidth="1.2" />
+        <path
+          d="M640 208 C 668 205 692 224 696 250 C 700 277 682 298 656 302 C 630 306 608 287 604 262 C 600 236 616 212 640 208 Z"
+          fill="#DCE9EF" fillOpacity="0.92" stroke="#4A4A42" strokeWidth="2.1" strokeLinecap="round"
+        />
+        {/* 高光 */}
+        <path d="M620 226 C 628 218 640 215 649 219" fill="none" stroke="#FAF7EE" strokeOpacity="0.85" strokeWidth="3.6" strokeLinecap="round" />
         {/* 眼睛 */}
-        <path d="M580 316 q 3 -3 6 0 M598 316 q 3 -3 6 0" strokeWidth="2.1" />
-        {/* 鼻子和嘴 */}
-        <path d="M589 324 l 3 3 l 3 -3 Z" fill="#4A4A42" stroke="none" />
-        <path d="M586 331 q 6 5 12 0" strokeWidth="1.4" />
-        {/* 胡须 */}
-        <path d="M560 320 q -10 1 -16 4 M560 326 q -10 3 -14 8 M624 320 q 10 1 16 4 M624 326 q 10 3 14 8" strokeOpacity="0.5" strokeWidth="1.2" />
-        {/* 前爪搭在笔记本上 */}
-        <path d="M560 388 q -10 -4 -14 -12 M576 390 q -8 -4 -12 -12" strokeOpacity="0.7" />
+        <path d="M626 250 C 627 242 635 240 638 246 C 641 252 636 259 631 257 C 627 256 625 253 626 250 Z" fill="#4A4A42" />
+        <path d="M648 249 C 649 241 656 239 659 245 C 662 251 657 258 652 256 C 648 255 647 252 648 249 Z" fill="#4A4A42" />
+        <path d="M630 245 q 1.5 -1.6 3 0 M650 244 q 1.5 -1.6 3 0" fill="none" stroke="#FAF7EE" strokeWidth="1.4" strokeLinecap="round" />
+        {/* 腮红 */}
+        <path d="M617 263 q 4 -2.2 7 0 M653 262 q 4 -2.2 7 0" fill="none" stroke="#C98F7B" strokeWidth="1.7" strokeLinecap="round" />
+        {/* 嘴 */}
+        <path d="M636 271 q 4 3 8 0" fill="none" stroke="#4A4A42" strokeWidth="1.4" strokeLinecap="round" />
+        {/* 漂浮线 */}
+        <path d="M610 316 q 9 4 18 0 M646 318 q 9 4 18 0" fill="none" stroke="#4A4A42" strokeOpacity="0.28" strokeWidth="1.3" strokeLinecap="round" />
       </g>
-      <text x="592" y="438" textAnchor="middle" fontSize="14" fill="#4A4A42" fontFamily="'LXGW WenKai','Kaiti SC','KaiTi',serif" opacity="0.8">
+      <text x="648" y="342" transform="translate(-50 0)" textAnchor="middle" fontSize="14" fill="#4A4A42" fontFamily="'LXGW WenKai','Kaiti SC','KaiTi',serif" opacity="0.82">
         小灵儿
       </text>
 
-      {/* 对话气泡 */}
-      <g>
+      {/* 对话气泡 — 手绘云朵 */}
+      <g transform="translate(-30 0)">
         <path
-          d="M488 210 q 0 -16 16 -16 l 156 0 q 16 0 16 16 l 0 34 q 0 16 -16 16 l -92 0 l -18 17 l 2 -17 l -48 0 q -16 0 -16 -16 Z"
-          fill="#FAF7EE" stroke="#4A4A42" strokeOpacity="0.45" strokeWidth="1.5" strokeLinejoin="round"
+          d="M476 166 C 471 151 486 142 502 145 C 512 132 534 132 544 144 C 558 136 576 142 580 156 C 596 154 610 166 606 180 C 618 188 614 202 600 206 C 590 214 574 212 566 204 C 552 214 532 212 522 202 C 506 210 490 204 486 192 C 474 188 470 176 476 166 Z"
+          fill="#FAF7EE" stroke="#4A4A42" strokeOpacity="0.4" strokeWidth="1.5" strokeLinejoin="round"
         />
-        <text x="582" y="242" textAnchor="middle" fontSize="13.5" fill="#4A4A42" fontFamily="'LXGW WenKai','Kaiti SC','KaiTi',serif">
+        <path d="M560 204 C 570 216 582 222 596 224 C 586 214 580 206 578 198" fill="#FAF7EE" stroke="#4A4A42" strokeOpacity="0.4" strokeWidth="1.5" strokeLinejoin="round" />
+        <text x="542" y="181" textAnchor="middle" fontSize="13.5" fill="#4A4A42" fontFamily="'LXGW WenKai','Kaiti SC','KaiTi',serif">
           今天有什么新念头？
         </text>
       </g>
 
       {/* 桌面小细节 */}
-      <g fill="none" stroke="#4A4A42" strokeOpacity="0.25" strokeWidth="1.2" strokeLinecap="round">
-        <path d="M260 430 q 3 -10 7 -1 M274 431 q 2 -8 6 -1 M330 428 q 3 -9 6 0" />
-        <circle cx="450" cy="430" r="2" fill="#D19A7C" stroke="none" />
-        <circle cx="462" cy="436" r="1.6" fill="#8FB4C9" stroke="none" />
+      <g fill="none" stroke="#4A4A42" strokeOpacity="0.22" strokeWidth="1.2" strokeLinecap="round">
+        <path d="M258 430 q 3 -10 7 -1 M272 431 q 2 -8 6 -1 M330 428 q 3 -9 6 0" />
+        <path d="M448 430 q 2 -7 5 -1 M460 432 q 2 -6 5 -1" />
       </g>
+      <path d="M452 436 q 4 -3 7 0 q -3 3 -7 0 Z" fill="#D19A7C" fillOpacity="0.7" />
+      <path d="M464 440 q 3 -2 6 0 q -3 3 -6 0 Z" fill="#8FB4C9" fillOpacity="0.7" />
     </svg>
   )
 }

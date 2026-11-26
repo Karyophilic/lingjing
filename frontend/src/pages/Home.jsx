@@ -6,7 +6,7 @@ import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
 import HeroSketch from '../components/HeroSketch'
 import {
-  DoodleNotebook, DoodleCat, DoodleBell, DoodleMap, DoodlePin,
+  DoodleNotebook, DoodleLing, DoodleBell, DoodleMap, DoodlePin,
   DoodleArrow, DoodleStar, DoodleLeaf,
 } from '../components/Doodle'
 
@@ -66,7 +66,7 @@ export default function Home() {
       <section className="px-5 pt-5">
         <div className="flex items-end justify-between gap-3">
           <h2 className="text-[30px] leading-tight text-ink-800 truncate max-w-[70%]">
-            Hi，{user?.username || '旅人'}
+            Hi，{user?.isGuest ? '旅人' : (user?.username || '旅人')}
           </h2>
           {user?.isGuest && (
             <span className="tag whitespace-nowrap">游客模式</span>
@@ -111,7 +111,7 @@ export default function Home() {
             onClick={() => navigate('/ai-chat')}
             className="sketch-card flex flex-col items-center justify-center py-4"
           >
-            <DoodleCat className="w-10 h-10 text-ink-700" />
+            <DoodleLing className="w-10 h-10 text-ink-700" />
             <span className="mt-2 text-sm text-ink-700 sketch-underline">问小灵儿</span>
           </button>
           <button

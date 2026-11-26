@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import {
-  DoodleStar, DoodleLeaf, DoodleCat, DoodleNotebook,
+  DoodleStar, DoodleLeaf, DoodleLing, DoodleNotebook,
   DoodleImage, DoodleMap, DoodleNote,
 } from '../components/Doodle'
 
@@ -30,7 +30,7 @@ const GLYPHS = [
   [/生活|日常|美食|旅行|城市/i, DoodleLeaf],
   [/学习|教育|知识|读书/i, DoodleNotebook],
   [/游戏|影视|视频|电影/i, DoodleImage],
-  [/哲学|心理|情绪|思考/i, DoodleCat],
+  [/哲学|心理|情绪|思考/i, DoodleLing],
   [/健康|运动|身体/i, DoodleLeaf],
 ]
 

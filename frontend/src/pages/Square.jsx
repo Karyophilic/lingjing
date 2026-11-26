@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { localInspirations, localAI } from '../api/local'
 import { Search, Heart, MessageCircle, MessageSquare, Mic, Image as ImageIcon, X, Sparkles } from 'lucide-react'
 import {
-  DoodlePerson, DoodleNotebook, DoodleLeaf, DoodleStar, DoodleCat,
+  DoodlePerson, DoodleNotebook, DoodleLeaf, DoodleStar, DoodleLing,
   DoodleBell, DoodleMap,
 } from '../components/Doodle'
 
@@ -35,7 +35,7 @@ const COVER_TONES = [
   { wash: '#E3EDF3', ink: '#3F5A68', Doodle: DoodleMap },
   { wash: '#F0E5DB', ink: '#6E3D2A', Doodle: DoodleStar },
   { wash: '#EDE8DC', ink: '#5A574C', Doodle: DoodleNotebook },
-  { wash: '#E6E9DD', ink: '#4A5A3C', Doodle: DoodleCat },
+  { wash: '#E6E9DD', ink: '#4A5A3C', Doodle: DoodleLing },
   { wash: '#EFE9DE', ink: '#6B5F45', Doodle: DoodleBell },
 ]
 

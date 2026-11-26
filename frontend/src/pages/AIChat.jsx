@@ -4,7 +4,7 @@ import { localAI } from '../api/local'
 import { hasApiKey, getConfigSummary } from '../api/aiConfig'
 import { friendlyErrorMessage } from '../api/deepseek'
 import ApiSettingsModal from '../components/ApiSettingsModal'
-import { DoodleCat, DoodleStar, DoodleLeaf, DoodleMap, DoodlePlanet, DoodlePerson } from '../components/Doodle'
+import { DoodleLing, DoodleStar, DoodleLeaf, DoodleMap, DoodlePlanet, DoodlePerson } from '../components/Doodle'
 import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, ChevronRight, AlertCircle } from 'lucide-react'
 
 // 小灵儿头像 — 手绘猫
@@ -12,7 +12,7 @@ function MascotAvatar({ size = 40 }) {
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <div className="mascot-float relative w-full h-full rounded-full bg-paper-50 border border-ink-700/35 grid place-items-center shadow-[2px_3px_0_rgba(74,74,66,0.08)]">
-        <DoodleCat className="w-[72%] h-[72%] text-ink-700" />
+        <DoodleLing className="w-[72%] h-[72%] text-ink-700" />
       </div>
     </div>
   )
