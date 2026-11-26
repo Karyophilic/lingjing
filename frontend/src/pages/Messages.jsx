@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { localMessages } from '../api/local'
+import { DoodlePerson, DoodleChat } from '../components/Doodle'
 import { Send, ArrowLeft, MessageCircle, User } from 'lucide-react'
 
 export default function Messages() {
@@ -81,7 +82,7 @@ export default function Messages() {
 
         {conversations.length === 0 ? (
           <div className="card text-center py-16">
-            <div className="text-5xl mb-4">💬</div>
+            <DoodleChat className="w-12 h-12 mb-4 text-ink-300" />
             <p className="text-gray-400 text-sm mb-1">还没有私信对话</p>
             <p className="text-gray-400 text-xs">
               去广场匹配同频灵感，找到志同道合的伙伴
@@ -101,8 +102,8 @@ export default function Messages() {
                 onClick={() => navigate(`/messages/${conv.userId}`)}
                 className="card w-full text-left flex items-center gap-3 hover:border-primary-200"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-beige-200 to-primary-100 flex items-center justify-center flex-shrink-0 text-lg">
-                  👤
+                <div className="w-12 h-12 rounded-full bg-paper-50 border border-ink-700/30 grid place-items-center flex-shrink-0">
+                  <DoodlePerson className="w-6 h-6 text-ink-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -126,14 +127,14 @@ export default function Messages() {
   const convUser = conversations.find(c => c.userId === activeUser)
 
   return (
-    <main className="max-w-lg mx-auto flex flex-col h-[calc(100vh-7rem)]">
+    <main className="max-w-lg mx-auto flex flex-col h-[calc(100vh-10rem)]">
       {/* 顶部 */}
       <div className="px-4 py-3 flex items-center gap-3 border-b border-beige-300/30 bg-white/70 backdrop-blur-xl">
         <button onClick={() => navigate('/messages')} className="p-1 hover:bg-beige-100 rounded-lg transition-colors">
           <ArrowLeft size={20} className="text-gray-500" />
         </button>
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-beige-200 to-primary-100 flex items-center justify-center text-lg">
-          👤
+        <div className="w-9 h-9 rounded-full bg-paper-50 border border-ink-700/30 grid place-items-center">
+          <DoodlePerson className="w-5 h-5 text-ink-600" />
         </div>
         <span className="font-bold text-gray-800 text-sm">
           @{convUser?.username || '对方'}
@@ -144,7 +145,7 @@ export default function Messages() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
-            <p className="text-4xl mb-3">💬</p>
+            <DoodleChat className="w-10 h-10 mb-3 text-ink-300" />
             <p>发送第一条消息吧</p>
           </div>
         ) : (

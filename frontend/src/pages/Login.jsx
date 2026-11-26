@@ -76,7 +76,7 @@ export default function Login() {
           </div>
           <p className="eyebrow">LINGJING · TRAVEL BOOK</p>
           <h1 className="text-[38px] leading-none mt-1 text-ink-800">灵境</h1>
-          <p className="text-sm text-ink-500 mt-2">灵感手帐 · 把每个念头写进山野与河流之间</p>
+          <p className="text-sm text-ink-500 mt-2">灵感手帐 · 把一闪而过的念头轻轻放在这里</p>
         </div>
 
         {/* 今日签 */}
@@ -189,7 +189,7 @@ export default function Login() {
             onClick={quickStart}
             className="text-sm text-ink-400 hover:text-ink-700 transition-colors"
           >
-            或者，直接<span className="sketch-underline">快速体验</span> ✨
+            或者，直接<span className="sketch-underline">快速体验</span>
           </button>
         </div>
 

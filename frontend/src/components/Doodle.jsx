@@ -142,3 +142,64 @@ export function DoodleArrow({ className = 'w-6 h-6' }) {
     </svg>
   )
 }
+
+export function DoodleMic({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <rect x="18" y="8" width="12" height="21" rx="6" />
+      <path d="M13 23 q 0 12 11 12 q 11 0 11 -12" />
+      <path d="M24 35 l 0 7 M18 43 q 6 -2 12 0" />
+      <path d="M21 14 q 3 -2 6 0 M21 19 q 3 -2 6 0" />
+    </svg>
+  )
+}
+
+export function DoodleImage({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <rect x="9" y="11" width="30" height="26" rx="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M11 32 L20 24 L26 29 L32 23 L37 27" />
+    </svg>
+  )
+}
+
+export function DoodleGlobe({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <circle cx="24" cy="24" r="14" />
+      <path d="M10 24 H38 M24 10 C 17 17 17 31 24 38 M24 10 C 31 17 31 31 24 38" />
+    </svg>
+  )
+}
+
+export function DoodleLock({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <rect x="13" y="21" width="22" height="17" rx="4" />
+      <path d="M18 21 V16 q 0 -6 6 -6 q 6 0 6 6 V21" />
+      <circle cx="24" cy="29" r="2.2" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function DoodleLink({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <path d="M20 28 L28 20" />
+      <path d="M17 22 l -4 4 q -4 4 0 8 q 4 4 8 0 l 4 -4" />
+      <path d="M31 26 l 4 -4 q 4 -4 0 -8 q -4 -4 -8 0 l -4 4" />
+    </svg>
+  )
+}
+
+export function DoodleNote({ className = 'w-6 h-6' }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...base}>
+      <path d="M20 34 V15 L36 11 V30" />
+      <ellipse cx="16" cy="35" rx="5" ry="4" />
+      <ellipse cx="32" cy="31" rx="5" ry="4" />
+      <path d="M20 21 L36 17" />
+    </svg>
+  )
+}

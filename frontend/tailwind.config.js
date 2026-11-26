@@ -86,8 +86,8 @@ export default {
           '"Songti SC"', 'serif',
         ],
         display: [
-          '"LXGW WenKai"', '"Kaiti SC"', '"STKaiti"', '"KaiTi"', '"楷体"',
-          '"Segoe Print"', '"Bradley Hand"', 'cursive',
+          '"STXingkai"', '"华文行楷"', '"LXGW WenKai"', '"Kaiti SC"',
+          '"STKaiti"', '"KaiTi"', '"楷体"', '"Segoe Print"', '"Bradley Hand"', 'cursive',
         ],
         mono: ['"Segoe Print"', '"Bradley Hand"', 'Consolas', 'monospace'],
       },

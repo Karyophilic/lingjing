@@ -114,9 +114,9 @@ function simpleHash(str) { let h = 0; for (let i = 0; i < str.length; i++) { h =
 
 // ===== AI Users & Seed Inspirations =====
 const AI_USERS = [
-  { username: 'AI灵感助手', bio: '🤖 我是AI灵感助手，每天自动生成创意灵感，供大家参考碰撞' },
-  { username: 'AI创意官', bio: '🎨 专注创意领域，分享设计、艺术、写作灵感' },
-  { username: 'AI造梦师', bio: '🌙 用想象力生成各种有趣的想法，激发你的创造力' },
+  { username: 'AI灵感助手', bio: '我是AI灵感助手，每天自动生成创意灵感，供大家参考碰撞' },
+  { username: 'AI创意官', bio: '专注创意领域，分享设计、艺术、写作灵感' },
+  { username: 'AI造梦师', bio: '用想象力生成各种有趣的想法，激发你的创造力' },
 ]
 
 const SEED_INSPIRATIONS = [
@@ -201,7 +201,7 @@ export const localAuth = {
       id, username, passwordHash: '', phone: '', email: '',
       createdAt: now(), isGuest: true,
     }
-    db.profile[id] = { bio: '👋 游客用户', avatar: '' }
+    db.profile[id] = { bio: '游客用户', avatar: '' }
     db.currentUserId = id
     saveDB(db)
     return { success: true, data: { user: { id, username, isGuest: true, createdAt: db.users[username].createdAt } } }
@@ -432,7 +432,7 @@ export const localAI = {
     db.wakeupChecks[u.id] = now(); saveDB(db)
 
     // 尝试 DeepSeek 生成个性化唤醒消息
-    const msgs = ['💡 还记得这个想法吗？','⏰ 几天前记下的灵感，回来看看？','🌟 被遗忘的念头在发光','🧠 这个灵感可能比想象中更有价值','🔔 灵感库存里有宝贝等你重新发现']
+    const msgs = ['还记得这个想法吗？','几天前记下的灵感，回来看看？','被遗忘的念头在发光','这个灵感可能比想象中更有价值','灵感库存里有宝贝等你重新发现']
     const items = []
     for (let i = 0; i < candidates.length; i++) {
       let msg = msgs[Math.floor(Math.random() * 5)]

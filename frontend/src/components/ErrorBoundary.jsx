@@ -24,9 +24,9 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3EBD9' }}>
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F7F2E6' }}>
           <div className="card max-w-sm w-full text-center py-10">
-            <div className="text-6xl mb-4">🔧</div>
+            <div className="text-4xl mb-4 font-display text-ink-400">!</div>
             <h2 className="text-lg font-bold text-gray-900 mb-2">出了点小问题</h2>
             <p className="text-sm text-gray-500 mb-6">
               可能是本地数据格式异常导致的，点击下方按钮清除数据后重新加载。

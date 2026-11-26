@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
 import { localInspirations, localAI } from '../api/local'
-import { Heart, MessageCircle, Send, Trash2, Lightbulb, Edit3, Pin, PinOff, Check, X, Mic, Image as ImageIcon } from 'lucide-react'
+import { Heart, MessageCircle, Send, Trash2, Edit3, Pin, PinOff, Check, X, Mic, Lightbulb, Image as ImageIcon } from 'lucide-react'
+import { DoodleStar, DoodleMic } from '../components/Doodle'
 
 export default function InspirationDetail() {
   const { user } = useAuth()
@@ -80,7 +81,7 @@ export default function InspirationDetail() {
   }
 
   if (loading) {
-    return <main className="max-w-lg mx-auto px-4 pt-6 flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></main>
+    return <main className="max-w-lg mx-auto px-4 pt-6 flex justify-center py-12"><div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" /></main>
   }
 
   if (!inspiration) {
@@ -109,7 +110,7 @@ export default function InspirationDetail() {
 
       {editing ? (
         <div className="card mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">✏️ 编辑灵感</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">编辑灵感</h2>
           <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
             className="input mb-3 text-lg font-medium" maxLength={200} autoFocus />
           <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
@@ -124,13 +125,13 @@ export default function InspirationDetail() {
               <X size={16} /> 取消</button>
             <button onClick={saveEdit} disabled={!editTitle.trim() || saving}
               className="btn-primary flex items-center gap-1 text-sm">
-              {saving ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={16} />} 保存</button>
+              {saving ? <span className="inline-block w-4 h-4 border-2 border-paper-50 border-t-transparent rounded-full animate-spin" /> : <Check size={16} />} 保存</button>
           </div>
         </div>
       ) : (
         <article className="card mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-2xl">💡</span>
+            <DoodleStar className="w-5 h-5 text-ink-500" />
             <h1 className="text-2xl font-bold text-gray-800">{inspiration.title}</h1>
           </div>
 
@@ -145,7 +146,7 @@ export default function InspirationDetail() {
 
           {inspiration.ai_summary && (
             <div className="bg-primary-50 rounded-xl p-3 mb-4">
-              <p className="text-sm text-primary-700">🤖 摘要：{inspiration.ai_summary}</p>
+              <p className="text-sm text-primary-700">AI 摘要：{inspiration.ai_summary}</p>
             </div>
           )}
 
@@ -158,7 +159,7 @@ export default function InspirationDetail() {
           {inspiration.voice_data && (
             <div className="mb-4 p-3 bg-gradient-to-r from-paper-100 to-beige-100 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🎙️</span>
+                <DoodleMic className="w-5 h-5 text-ink-600" />
                 <span className="text-sm font-medium text-gray-700">
                   语音记录{inspiration.voice_duration > 0 && ` (${Math.floor(inspiration.voice_duration / 60)}分${(inspiration.voice_duration % 60)}秒)`}
                 </span>
@@ -203,7 +204,7 @@ export default function InspirationDetail() {
               <button key={r.inspiration_id} onClick={() => navigate(`/inspiration/${r.inspiration_id}`)}
                 className="card block w-full text-left hover:border-primary-200">
                 <p className="font-medium text-gray-800">{r.title}</p>
-                <p className="text-xs text-primary-500 mt-1">🔗 {r.connection}</p>
+                <p className="text-xs text-primary-500 mt-1">{r.connection}</p>
               </button>
             ))}
           </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { localAI } from '../api/local'
 import { hasApiKey } from '../api/deepseek'
+import { DoodleStar } from '../components/Doodle'
 import { Bell, BellOff, ArrowRight, Key } from 'lucide-react'
 
 export default function Wakeup() {
@@ -59,10 +60,10 @@ export default function Wakeup() {
           </button>
         </div>
       ) : loading && !checked ? (
-        <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
+        <div className="flex justify-center py-12"><div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" /></div>
       ) : reminders.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">{checked ? '✨' : <BellOff size={48} className="mx-auto text-gray-300" />}</div>
+          <div className="text-5xl mb-4"><DoodleStar className="w-12 h-12 mx-auto text-ink-300" /></div>
           <p className="text-gray-800 font-medium mb-2">
             {checked ? '暂时没有需要唤醒的灵感' : '正在检查...'}
           </p>

@@ -50,10 +50,10 @@ export default function MyInspirations() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
+        <div className="flex justify-center py-12"><div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">📝</div>
+          <div className="text-4xl mb-4 font-display text-ink-300">...</div>
           <p className="text-gray-500">{search ? '没有匹配的灵感' : '还没有灵感，记录第一个吧'}</p>
         </div>
       ) : (

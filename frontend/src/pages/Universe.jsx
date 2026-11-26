@@ -6,6 +6,10 @@ import {
   Plus, Link2, X, Sparkles, Check,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
+import {
+  DoodleStar, DoodleLeaf, DoodleCat, DoodleNotebook,
+  DoodleImage, DoodleMap, DoodleNote,
+} from '../components/Doodle'
 
 // 低饱和标本色 — 与全站奶油纸 / 墨色统一
 const TONES = [
@@ -18,16 +22,16 @@ const TONES = [
 ]
 
 const GLYPHS = [
-  [/科技|编程|代码|AI|算法|产品/i, '✳'],
-  [/设计|艺术|绘画|摄影/i, '◐'],
-  [/写作|文字|文案|故事|日记/i, '✎'],
-  [/音乐|音频|歌|播客/i, '♪'],
-  [/商业|创业|品牌|营销/i, '◆'],
-  [/生活|日常|美食|旅行|城市/i, '○'],
-  [/学习|教育|知识|读书/i, '✧'],
-  [/游戏|影视|视频|电影/i, '▷'],
-  [/哲学|心理|情绪|思考/i, '◍'],
-  [/健康|运动|身体/i, '❋'],
+  [/科技|编程|代码|AI|算法|产品/i, DoodleStar],
+  [/设计|艺术|绘画|摄影/i, DoodleImage],
+  [/写作|文字|文案|故事|日记/i, DoodleNotebook],
+  [/音乐|音频|歌|播客/i, DoodleNote],
+  [/商业|创业|品牌|营销/i, DoodleMap],
+  [/生活|日常|美食|旅行|城市/i, DoodleLeaf],
+  [/学习|教育|知识|读书/i, DoodleNotebook],
+  [/游戏|影视|视频|电影/i, DoodleImage],
+  [/哲学|心理|情绪|思考/i, DoodleCat],
+  [/健康|运动|身体/i, DoodleLeaf],
 ]
 
 function hashString(str) {
@@ -53,7 +57,7 @@ function glyphOf(insp) {
   for (const [re, glyph] of GLYPHS) {
     if (re.test(text)) return glyph
   }
-  return '✦'
+  return DoodleStar
 }
 
 function formatDate(value) {
@@ -249,7 +253,7 @@ export default function Universe() {
       const result = await analyzeInspirationConnections(selectedInsp)
       setAnalysis(result)
     } catch (e) {
-      setAnalysis(`⚠️ AI 分析失败：${e.message || '请检查 AI 接口配置'}`)
+      setAnalysis(`AI 分析失败：${e.message || '请检查 AI 接口配置'}`)
     } finally {
       setAnalyzing(false)
       exitSelectMode()
@@ -298,6 +302,7 @@ export default function Universe() {
           <div className="absolute inset-0" key={`${activeYear}-${nodes.length}`}>
             {nodes.map((node) => {
               const selected = selectedIds.has(node.id)
+              const Glyph = node.glyph
               return (
                 <button
                   key={node.id}
@@ -322,7 +327,9 @@ export default function Universe() {
                       borderColor: 'rgba(74,74,66,0.62)',
                     }}
                   >
-                    <span className="atlas-glyph" style={{ color: node.tone.ink }}>{node.glyph}</span>
+                    <span className="atlas-glyph" style={{ color: node.tone.ink }}>
+                      <Glyph className="w-4 h-4" />
+                    </span>
                   </span>
                   {node.showLabel && (
                     <span className="atlas-label">

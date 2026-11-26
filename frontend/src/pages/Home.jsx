@@ -6,8 +6,8 @@ import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
 import HeroSketch from '../components/HeroSketch'
 import {
-  DoodleNotebook, DoodleChat, DoodleBell, DoodleMap, DoodlePin,
-  DoodleArrow, DoodleStar, DoodleLeaf, DoodleCat,
+  DoodleNotebook, DoodleCat, DoodleBell, DoodleMap, DoodlePin,
+  DoodleArrow, DoodleStar, DoodleLeaf,
 } from '../components/Doodle'
 
 export default function Home() {
@@ -53,7 +53,7 @@ export default function Home() {
           >
             灵感手帐
           </h1>
-          <p className="mt-1 text-xs text-ink-500 tracking-[0.12em]">把念头写进山野与河流之间</p>
+          <p className="mt-1 text-xs text-ink-500 tracking-[0.12em]">把一闪而过的念头，轻轻放在这里</p>
         </div>
 
         <div className="absolute top-3 left-5 flex items-center gap-1.5 text-[10px] text-ink-500 tracking-[0.18em]">
@@ -65,7 +65,7 @@ export default function Home() {
       {/* 问候 */}
       <section className="px-5 pt-5">
         <div className="flex items-end justify-between gap-3">
-          <h2 className="text-[32px] leading-none text-ink-800">
+          <h2 className="text-[30px] leading-tight text-ink-800 truncate max-w-[70%]">
             Hi，{user?.username || '旅人'}
           </h2>
           {user?.isGuest && (
@@ -111,8 +111,8 @@ export default function Home() {
             onClick={() => navigate('/ai-chat')}
             className="sketch-card flex flex-col items-center justify-center py-4"
           >
-            <DoodleChat className="w-10 h-10 text-ink-700" />
-            <span className="mt-2 text-sm text-ink-700 sketch-underline">AI 对话</span>
+            <DoodleCat className="w-10 h-10 text-ink-700" />
+            <span className="mt-2 text-sm text-ink-700 sketch-underline">问小灵儿</span>
           </button>
           <button
             onClick={() => navigate('/wakeup')}
@@ -148,7 +148,7 @@ export default function Home() {
 
         {loading ? (
           <div className="sketch-card flex items-center justify-center py-12">
-            <div className="animate-pulse-soft text-2xl">✎</div>
+            <div className="w-8 h-8 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" />
           </div>
         ) : recentInspirations.length === 0 ? (
           <div className="sketch-card text-center py-10 px-5">

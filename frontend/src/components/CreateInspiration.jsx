@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, Send, Mic, MicOff, Image as ImageIcon, Trash2 } from 'lucide-react'
+import { X, Send, MicOff, Trash2 } from 'lucide-react'
+import { DoodleNotebook, DoodleMic, DoodleImage, DoodleGlobe, DoodleLock } from './Doodle'
 import { localInspirations } from '../api/local'
 import { hasApiKey } from '../api/deepseek'
 
@@ -152,7 +153,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center">
       <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 animate-[slideUp_0.3s_ease-out] max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">💡 记录灵感</h2>
+          <h2 className="text-xl text-ink-800">记录灵感</h2>
           <button onClick={onClose} className="p-2 hover:bg-beige-100 rounded-full transition-colors">
             <X size={20} />
           </button>
@@ -187,7 +188,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
           {voiceData && (
             <div className="mb-3 p-3 bg-primary-50 rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🎙️</span>
+                <DoodleMic className="w-5 h-5 text-ink-600" />
                 <span className="text-sm font-medium text-primary-700">
                   语音记录 ({formatTime(voiceDuration)})
                 </span>
@@ -218,10 +219,10 @@ export default function CreateInspiration({ onClose, onCreated }) {
           {/* 内容类型切换 */}
           <div className="flex items-center gap-2 mb-4">
             {[
-              { type: 'text', label: '文字', icon: '📝' },
-              { type: 'voice', label: '语音', icon: '🎙️' },
-              { type: 'image', label: '图片', icon: '🖼️' },
-            ].map(({ type, label, icon }) => (
+              { type: 'text', label: '文字', Icon: DoodleNotebook },
+              { type: 'voice', label: '语音', Icon: DoodleMic },
+              { type: 'image', label: '图片', Icon: DoodleImage },
+            ].map(({ type, label, Icon }) => (
               <button
                 key={type}
                 type="button"
@@ -251,7 +252,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
                 {type === 'voice' && isRecording ? (
                   <><MicOff size={14} /> 录制中 {formatTime(recordingTime)}</>
                 ) : (
-                  <>{icon} {label}</>
+                  <><Icon className="w-4 h-4" /> {label}</>
                 )}
               </button>
             ))}
@@ -280,7 +281,7 @@ export default function CreateInspiration({ onClose, onCreated }) {
           {/* 公开/私密 — 更显眼的开关 */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{isPublic ? '🌍' : '🔒'}</span>
+              {isPublic ? <DoodleGlobe className="w-5 h-5 text-ink-600" /> : <DoodleLock className="w-5 h-5 text-ink-600" />}
               <div>
                 <span className="text-sm font-medium text-gray-700">
                   {isPublic ? '公开到灵感广场' : '仅自己可见'}

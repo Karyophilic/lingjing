@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { Sparkles, X } from 'lucide-react'
 
 const tips = [
-  '💡 试试用语音记录灵感，比打字快 3 倍',
-  '🧠 72 小时后，回来看看那些被遗忘的灵感',
-  '🔗 灵感广场可以找到和你想得一样的人',
-  '🎯 公开灵感更容易遇到同频的伙伴',
-  '⚡ 灵感不等人，打开就记，3 秒搞定',
+  '试试用语音记录灵感，比打字快 3 倍',
+  '72 小时后，回来看看那些被遗忘的灵感',
+  '灵感广场可以找到和你想得一样的人',
+  '公开灵感更容易遇到同频的伙伴',
+  '灵感不等人，打开就记，3 秒搞定',
 ]
 
 export default function AIAssistant() {

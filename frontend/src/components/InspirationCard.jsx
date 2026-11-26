@@ -125,7 +125,7 @@ export default function InspirationCard({ inspiration, onLike, showUser = true, 
 
       {/* 摘要 */}
       {ai_summary && (
-        <p className="text-sm text-gray-500 mb-2 line-clamp-1">🤖 {ai_summary}</p>
+        <p className="text-sm text-gray-500 mb-2 line-clamp-1"><span className="text-[10px] tracking-[0.12em] text-ink-400">AI · </span>{ai_summary}</p>
       )}
 
       {/* 内容预览 */}

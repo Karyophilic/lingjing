@@ -25,7 +25,7 @@ export default function Matches() {
   if (loading) {
     return (
       <main className="max-w-lg mx-auto px-4 pt-6 flex justify-center py-12">
-        <div className="animate-spin text-3xl">💡</div>
+        <div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" />
       </main>
     )
   }
@@ -67,7 +67,7 @@ export default function Matches() {
               <span key={tag} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
                 i === 0 ? 'bg-purple-100 text-purple-700' : i === 1 ? 'bg-primary-100 text-primary-700' : 'bg-beige-100 text-gray-600'
               }`}>
-                {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {tag}
+                NO.{i + 1} {tag}
               </span>
             ))}
           </div>
@@ -128,20 +128,20 @@ export default function Matches() {
           {/* 跨用户匹配入口 */}
           <div className="mt-8 mb-4 p-4 bg-gradient-to-r from-purple-50 to-primary-50 rounded-2xl">
             <p className="text-sm text-gray-500 text-center mb-3">
-              💡 想看其他用户的灵感和你的匹配度吗？
+              想看其他用户的灵感和你的匹配度吗？
             </p>
             <button
               onClick={() => navigate('/square')}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-medium text-sm transition-all active:scale-95"
               style={{ background: 'linear-gradient(135deg, #C08A2E, #9A6A1F)' }}
             >
-              <MessageSquare size={16} /> 去广场发现同频伙伴 ✨
+              <MessageSquare size={16} /> 去广场发现同频伙伴
             </button>
           </div>
         </div>
       ) : (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">🔍</div>
+          <div className="text-4xl mb-4 font-display text-ink-300">?</div>
           <p className="text-gray-800 font-medium mb-2">
             {totalCount < 2 ? '记录更多灵感，发现隐藏关联' : '没有发现关联的灵感对'}
           </p>

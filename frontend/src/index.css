@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,19 +7,18 @@
   body {
     @apply text-ink-700 min-h-screen;
     font-family: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', 'Songti SC', serif;
-    background-color: #F4EFE3;
+    background-color: #F7F2E6;
     background-image:
-      radial-gradient(ellipse at 12% 0%, rgba(255, 252, 244, 0.85) 0%, transparent 46%),
-      radial-gradient(ellipse at 88% 18%, rgba(169, 198, 216, 0.14) 0%, transparent 40%),
-      radial-gradient(ellipse at 18% 88%, rgba(169, 183, 154, 0.14) 0%, transparent 44%),
-      radial-gradient(rgba(74, 74, 66, 0.03) 0.6px, transparent 0.9px);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 7px 7px;
+      radial-gradient(ellipse at 12% 0%, rgba(255, 252, 244, 0.55) 0%, transparent 44%),
+      radial-gradient(ellipse at 88% 20%, rgba(169, 198, 216, 0.07) 0%, transparent 38%),
+      radial-gradient(ellipse at 18% 88%, rgba(169, 183, 154, 0.07) 0%, transparent 40%);
+    background-size: 100% 100%;
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, .font-display {
-    font-family: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', 'Segoe Print', cursive;
+    font-family: 'STXingkai', '华文行楷', 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive;
     font-weight: 400;
     letter-spacing: 0.02em;
   }
@@ -74,13 +74,13 @@
   }
 
   .card {
-    @apply bg-paper-200 p-5 transition-all duration-300;
-    border: 1.5px solid rgba(74, 74, 66, 0.26);
+    @apply bg-paper-200 p-5 transition-all duration-300 relative;
+    border: 1.5px solid transparent;
     border-radius: 20px 26px 18px 24px / 24px 18px 26px 20px;
     box-shadow: 2px 3px 0 rgba(74, 74, 66, 0.06);
   }
   .card:hover {
-    border-color: rgba(74, 74, 66, 0.38);
+    border-color: transparent;
     box-shadow: 3px 5px 0 rgba(74, 74, 66, 0.08);
     transform: translateY(-2px) rotate(-0.2deg);
   }
@@ -132,8 +132,9 @@
 }
 
 .sketch-card {
+  position: relative;
   background: #F0E9D8;
-  border: 1.5px solid rgba(74, 74, 66, 0.28);
+  border: 1.5px solid transparent;
   border-radius: 18px 24px 16px 22px / 22px 16px 24px 18px;
   box-shadow: 2px 3px 0 rgba(74, 74, 66, 0.07);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -141,7 +142,7 @@
 .sketch-card:hover {
   transform: translateY(-3px) rotate(-0.4deg);
   box-shadow: 3px 5px 0 rgba(74, 74, 66, 0.1);
-  border-color: rgba(74, 74, 66, 0.4);
+  border-color: transparent;
 }
 
 /* ============================================
@@ -487,4 +488,41 @@
   border: 1.5px solid rgba(74, 74, 66, 0.3);
   border-radius: 22px 28px 20px 26px / 26px 20px 28px 22px;
   box-shadow: 4px 6px 0 rgba(74, 74, 66, 0.1);
+}
+
+/* Wobbly ink borders (SVG filter defined in App) */
+.card::before, .sketch-card::before, .nav-pill::before, .archive-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.6px solid rgba(74, 74, 66, 0.5);
+  border-radius: inherit;
+  filter: url(#wobble-ink);
+  pointer-events: none;
+}
+.card:hover::before, .sketch-card:hover::before, .archive-card:hover::before {
+  border-color: rgba(74, 74, 66, 0.66);
+}
+.tag {
+  position: relative;
+  border-color: transparent;
+}
+.tag::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.1px dashed rgba(74, 74, 66, 0.42);
+  border-radius: inherit;
+  filter: url(#wobble-ink);
+  pointer-events: none;
+}
+.atlas-orb::after {
+  filter: url(#wobble-ink);
+}
+.nav-pill {
+  position: relative;
+  border-color: transparent;
+}
+.archive-card {
+  border-color: transparent;
 }

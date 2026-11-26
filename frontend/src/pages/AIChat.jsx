@@ -4,7 +4,7 @@ import { localAI } from '../api/local'
 import { hasApiKey, getConfigSummary } from '../api/aiConfig'
 import { friendlyErrorMessage } from '../api/deepseek'
 import ApiSettingsModal from '../components/ApiSettingsModal'
-import { DoodleCat } from '../components/Doodle'
+import { DoodleCat, DoodleStar, DoodleLeaf, DoodleMap, DoodlePlanet, DoodlePerson } from '../components/Doodle'
 import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, ChevronRight, AlertCircle } from 'lucide-react'
 
 // 小灵儿头像 — 手绘猫
@@ -329,17 +329,17 @@ export default function AIChat() {
             {/* 快捷入口 */}
             <div className="grid grid-cols-2 gap-2 w-full mt-4">
               {[
-                { emoji: '💭', label: '我脑子里有个想法' },
-                { emoji: '😴', label: '最近没什么灵感' },
-                { emoji: '🔍', label: '帮我梳理一下思路' },
-                { emoji: '🚀', label: '我想做点新东西' },
-              ].map(({ emoji, label }) => (
+                { Icon: DoodleStar, label: '我脑子里有个想法' },
+                { Icon: DoodleLeaf, label: '最近没什么灵感' },
+                { Icon: DoodleMap, label: '帮我梳理一下思路' },
+                { Icon: DoodlePlanet, label: '我想做点新东西' },
+              ].map(({ Icon, label }) => (
                 <button
                   key={label}
                   onClick={() => { setInput(label); inputRef.current?.focus() }}
                   className="flex items-center gap-2 p-3 rounded-xl bg-white border border-beige-300/40 hover:border-primary-200 hover:bg-primary-50/30 transition-all text-left"
                 >
-                  <span className="text-lg">{emoji}</span>
+                  <Icon className="w-5 h-5 text-ink-600" />
                   <span className="text-xs text-gray-600 line-clamp-1">{label}</span>
                 </button>
               ))}
@@ -363,8 +363,8 @@ export default function AIChat() {
               <div className={`flex items-end gap-2 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 {/* 头像 */}
                 {msg.role === 'user' ? (
-                  <div className="w-8 h-8 rounded-full bg-beige-200 flex items-center justify-center flex-shrink-0 text-sm">
-                    👤
+                  <div className="w-8 h-8 rounded-full bg-paper-50 border border-ink-700/30 grid place-items-center flex-shrink-0">
+                    <DoodlePerson className="w-5 h-5 text-ink-600" />
                   </div>
                 ) : (
                   <MascotAvatar size={32} />

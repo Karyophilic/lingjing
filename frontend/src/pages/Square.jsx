@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { localInspirations } from '../api/local'
-import { Search, Heart, MessageCircle, Mic, Image as ImageIcon, Bot, X, Sparkles, MessageSquare } from 'lucide-react'
+import { localInspirations, localAI } from '../api/local'
+import { Search, Heart, MessageCircle, MessageSquare, Mic, Image as ImageIcon, X, Sparkles } from 'lucide-react'
+import {
+  DoodlePerson, DoodleNotebook, DoodleLeaf, DoodleStar, DoodleCat,
+  DoodleBell, DoodleMap,
+} from '../components/Doodle'
 
 const POPULAR_TAGS = ['创意', '科技', '艺术', '生活', '商业', '设计', '写作', '音乐']
 
@@ -26,20 +30,19 @@ function waterfall(items) {
   return [left, right]
 }
 
-const COVER_GRADIENTS = [
-  'linear-gradient(135deg, #E9EDE0, #D5DEC6)',
-  'linear-gradient(135deg, #E4EDF2, #CFE0E9)',
-  'linear-gradient(135deg, #F0E4DA, #E2CDBE)',
-  'linear-gradient(135deg, #ECE7DA, #D9D2C2)',
-  'linear-gradient(135deg, #EDE7D5, #D8CFB8)',
-  'linear-gradient(135deg, #DDE8E0, #C4D3C4)',
-  'linear-gradient(135deg, #E8E1D2, #CFC3AC)',
-  'linear-gradient(135deg, #E7EEF2, #CBDDE6)',
+const COVER_TONES = [
+  { wash: '#E7EDE2', ink: '#4A5A3C', Doodle: DoodleLeaf },
+  { wash: '#E3EDF3', ink: '#3F5A68', Doodle: DoodleMap },
+  { wash: '#F0E5DB', ink: '#6E3D2A', Doodle: DoodleStar },
+  { wash: '#EDE8DC', ink: '#5A574C', Doodle: DoodleNotebook },
+  { wash: '#E6E9DD', ink: '#4A5A3C', Doodle: DoodleCat },
+  { wash: '#EFE9DE', ink: '#6B5F45', Doodle: DoodleBell },
 ]
 
-function coverGradient(id) {
-  let h = 0; for (let i = 0; i < id.length; i++) { h = ((h << 5) - h) + id.charCodeAt(i); h |= 0 }
-  return COVER_GRADIENTS[Math.abs(h) % COVER_GRADIENTS.length]
+function coverTone(id) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) { h = ((h << 5) - h) + id.charCodeAt(i); h |= 0 }
+  return COVER_TONES[Math.abs(h) % COVER_TONES.length]
 }
 
 export default function Square() {
@@ -93,7 +96,7 @@ export default function Square() {
     setShowMatches(true)
     await new Promise(r => setTimeout(r, 800))
     try {
-      const res = localInspirations.matchWithOthers()
+      const res = localAI.matchWithOthers()
       setMatchResults(res.data?.items || [])
     } catch (err) {
       console.error('匹配失败', err)
@@ -128,14 +131,15 @@ export default function Square() {
   }
 
   const WaterfallCard = ({ item }) => {
-    const gradient = coverGradient(item.id)
+    const tone = coverTone(item.id)
+    const CoverDoodle = tone.Doodle
     const likeCount = item.like_count || 0
     const commentCount = item.comment_count || 0
 
     return (
       <Link
         to={`/inspiration/${item.id}`}
-        className="block rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-300 group"
+        className="sketch-card block overflow-hidden group"
         style={{ marginBottom: 12 }}
       >
         {item.image_data ? (
@@ -146,7 +150,7 @@ export default function Square() {
           </div>
         ) : item.voice_data ? (
           <div className="flex items-center justify-center p-6"
-            style={{ background: gradient, minHeight: 100 }}>
+            style={{ background: tone.wash, minHeight: 100 }}>
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center mx-auto mb-2">
                 <Mic size={22} className="text-gray-500" />
@@ -159,9 +163,13 @@ export default function Square() {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center p-5"
-            style={{ background: gradient, minHeight: 90 }}>
-            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 text-center font-medium">
+          <div className="relative flex items-center justify-center p-5 overflow-hidden"
+            style={{ background: tone.wash, minHeight: 96 }}>
+            <CoverDoodle
+              className="absolute -right-3 -bottom-4 w-24 h-24 opacity-20 pointer-events-none"
+              style={{ color: tone.ink }}
+            />
+            <p className="relative text-sm text-ink-700 leading-relaxed line-clamp-3 text-center">
               {item.content || item.title}
             </p>
           </div>
@@ -175,7 +183,7 @@ export default function Square() {
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {item.tags.slice(0, 2).map(t => (
-                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary-50 text-primary-600">
+                <span key={t} className="tag text-[10px] px-2 py-0.5">
                   {t}
                 </span>
               ))}
@@ -184,8 +192,10 @@ export default function Square() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-100 to-primary-200 flex items-center justify-center text-[10px] flex-shrink-0">
-                {item.is_ai_generated ? <Bot size={10} className="text-primary-400" /> : '👤'}
+              <div className="w-5 h-5 rounded-full bg-paper-50 border border-ink-700/30 grid place-items-center flex-shrink-0">
+                {item.is_ai_generated
+                  ? <DoodleStar className="w-3 h-3 text-ink-500" />
+                  : <DoodlePerson className="w-3 h-3 text-ink-500" />}
               </div>
               <span className="text-[11px] text-gray-400 truncate">
                 {item.username || '匿名'}
@@ -243,11 +253,11 @@ export default function Square() {
           transition-all duration-200 active:scale-[0.98] pulse-glow flex items-center justify-center gap-2"
         style={{
           background: 'linear-gradient(135deg, #2F2A21, #4A4437)',
-          boxShadow: '0 4px 20px rgba(108,92,231,0.3)',
+          boxShadow: '2px 4px 0 rgba(74,74,66,0.18)',
         }}
       >
         <Sparkles size={18} className="animate-pulse" />
-        ✨ 发现同频灵感
+        发现同频灵感
         <span className="text-xs opacity-80">· 找到与你共鸣的伙伴</span>
       </button>
 
@@ -283,11 +293,11 @@ export default function Square() {
       {/* 瀑布流 */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin text-3xl">💡</div>
+          <div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" />
         </div>
       ) : displayItems.length === 0 ? (
         <div className="text-center py-20">
-          <div className="text-5xl mb-4">🔍</div>
+          <DoodleStar className="w-12 h-12 mx-auto mb-4 text-ink-300" />
           <p className="text-gray-400 text-sm">
             {searchResults !== null ? '没有找到相关灵感' : '还没有公开的灵感'}
           </p>
@@ -322,12 +332,12 @@ export default function Square() {
 
             {matching ? (
               <div className="flex flex-col items-center py-12">
-                <div className="animate-spin text-3xl mb-3">💡</div>
+                <div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin mb-3" />
                 <p className="text-gray-500 text-sm">正在分析灵感同频度...</p>
               </div>
             ) : matchResults.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-5xl mb-4">🔍</div>
+                <DoodleStar className="w-12 h-12 mx-auto mb-4 text-ink-300" />
                 <p className="text-gray-500 text-sm mb-2">暂无匹配结果</p>
                 <p className="text-gray-400 text-xs">
                   多记录灵感并公开到广场，按标签就能找到同频的伙伴
@@ -339,15 +349,15 @@ export default function Square() {
                   <div key={match.userId} className="card">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-beige-200 to-primary-100 flex items-center justify-center text-lg">
-                          👤
+                        <div className="w-10 h-10 rounded-full bg-paper-50 border border-ink-700/30 grid place-items-center">
+                          <DoodlePerson className="w-5 h-5 text-ink-600" />
                         </div>
                         <div>
                           <span className="font-medium text-gray-800 text-sm">@{match.username}</span>
                           <p className="text-xs text-gray-400">{match.commonTags?.slice(0, 3).join(' · ')}</p>
                         </div>
                       </div>
-                      <span className="text-lg font-bold text-purple-500">{match.matchScore}%</span>
+                      <span className="text-lg font-bold text-ink-700">{match.matchScore}%</span>
                     </div>
 
                     {/* 对方的灵感 */}

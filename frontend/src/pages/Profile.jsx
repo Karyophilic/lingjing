@@ -115,12 +115,12 @@ export default function Profile() {
     : currentList
 
   const hourLabel = (h) => {
-    if (h >= 5 && h < 8) return '清晨 🌅'
-    if (h >= 8 && h < 12) return '上午 ☀️'
-    if (h >= 12 && h < 14) return '午后 🌤️'
-    if (h >= 14 && h < 18) return '下午 🌈'
-    if (h >= 18 && h < 22) return '傍晚 🌆'
-    return '深夜 🌙'
+    if (h >= 5 && h < 8) return '清晨'
+    if (h >= 8 && h < 12) return '上午'
+    if (h >= 12 && h < 14) return '午后'
+    if (h >= 14 && h < 18) return '下午'
+    if (h >= 18 && h < 22) return '傍晚'
+    return '深夜'
   }
 
   return (
@@ -327,10 +327,10 @@ export default function Profile() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin text-3xl">💡</div></div>
+        <div className="flex justify-center py-12"><div className="w-9 h-9 rounded-full border-2 border-ink-300 border-t-ink-700 animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="text-5xl mb-4">{tab === 'archived' ? '📦' : '📝'}</div>
+          <div className="text-4xl mb-4 font-display text-ink-300">...</div>
           <p className="text-gray-500">
             {search ? '没有匹配的灵感' : tab === 'archived' ? '还没有存档的灵感' : '还没有灵感，记录第一个吧'}
           </p>
