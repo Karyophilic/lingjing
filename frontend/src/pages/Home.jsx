@@ -7,7 +7,7 @@ import InspirationCard from '../components/InspirationCard'
 import HeroSketch from '../components/HeroSketch'
 import {
   DoodleNotebook, DoodleChat, DoodleBell, DoodleMap, DoodlePin,
-  DoodleArrow, DoodleStar, DoodleLeaf,
+  DoodleArrow, DoodleStar, DoodleLeaf, DoodleCat,
 } from '../components/Doodle'
 
 export default function Home() {
@@ -166,6 +166,18 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* 问 AI 的小猫 */}
+      <button
+        onClick={() => navigate('/ai-chat')}
+        className="fixed right-4 bottom-24 z-40 flex flex-col items-center gap-1"
+        aria-label="问 AI"
+      >
+        <span className="w-12 h-12 rounded-full bg-paper-50 border border-ink-700/35 grid place-items-center shadow-[2px_4px_0_rgba(74,74,66,0.12)]">
+          <DoodleCat className="w-7 h-7 text-ink-700" />
+        </span>
+        <span className="text-[9px] text-ink-500 tracking-[0.08em]">问 AI</span>
+      </button>
 
       {showCreate && (
         <CreateInspiration
