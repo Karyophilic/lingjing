@@ -4,10 +4,10 @@ import { useAuth } from '../stores/auth'
 import { localInspirations, localAI } from '../api/local'
 import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
-import HeroSketch from '../components/HeroSketch'
+import LingMascot from '../components/LingMascot'
 import {
   DoodleNotebook, DoodleLing, DoodleBell, DoodleMap, DoodlePin,
-  DoodleArrow, DoodleStar, DoodleLeaf,
+  DoodleArrow, DoodleLeaf,
 } from '../components/Doodle'
 
 export default function Home() {
@@ -41,29 +41,8 @@ export default function Home() {
 
   return (
     <main className="max-w-lg mx-auto pb-28">
-      {/* 手绘封面 */}
-      <section className="relative hero-paper overflow-hidden rounded-b-[34px] border-b border-ink-700/15">
-        <HeroSketch className="w-full h-[330px] object-cover" />
-
-        <div className="absolute top-6 inset-x-0 px-6 text-center pointer-events-none">
-          <p className="eyebrow text-ink-500">LINGJING · TRAVEL BOOK</p>
-          <h1
-            className="text-[42px] leading-none mt-1.5 text-ink-800"
-            style={{ textShadow: '2px 2px 0 rgba(250,247,238,0.85)' }}
-          >
-            灵感手帐
-          </h1>
-          <p className="mt-1 text-xs text-ink-500 tracking-[0.12em]">把一闪而过的念头，轻轻放在这里</p>
-        </div>
-
-        <div className="absolute top-3 left-5 flex items-center gap-1.5 text-[10px] text-ink-500 tracking-[0.18em]">
-          <DoodleStar className="w-4 h-4 text-spark-500" />
-          VOL. 01
-        </div>
-      </section>
-
       {/* 问候 */}
-      <section className="px-5 pt-5">
+      <section className="px-5 pt-6">
         <div className="flex items-end justify-between gap-3">
           <h2 className="text-[30px] leading-tight text-ink-800 truncate max-w-[70%]">
             Hi，{user?.isGuest ? '旅人' : (user?.username || '旅人')}
@@ -74,7 +53,6 @@ export default function Home() {
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-3 text-sm text-ink-500">
           <span>{dateLabel} · {weekday} ·</span>
-          <span className="hidden sm:inline w-5 h-px bg-ink-300" />
           <span>今天适合记下一个小念头</span>
         </div>
       </section>
@@ -166,6 +144,8 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <LingMascot />
 
       {showCreate && (
         <CreateInspiration

@@ -526,3 +526,12 @@
 .archive-card {
   border-color: transparent;
 }
+
+.ling-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eye-blink 4.4s ease-in-out infinite;
+}
+.ling-eye:nth-of-type(2) {
+  animation-delay: 0.12s;
+}

@@ -19,7 +19,6 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
-  const isHome = location.pathname === '/'
 
   useEffect(() => {
     if (user && !user.isGuest) {
@@ -33,20 +32,16 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 顶部栏：首页悬浮在插画上，其他页留在纸面上 */}
-      <header className={`${isHome ? 'absolute bg-transparent' : 'sticky bg-paper-100/80 backdrop-blur-xl border-b border-ink-700/15'} top-0 inset-x-0 z-50`}>
+      {/* 顶部栏 */}
+      <header className="sticky bg-paper-100/80 backdrop-blur-xl border-b border-ink-700/15 top-0 inset-x-0 z-50">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          {isHome ? (
-            <span className="w-6" aria-hidden="true" />
-          ) : (
-            <div className="flex items-center gap-2">
-              <DoodleStar className="w-6 h-6 text-ink-700" />
-              <div className="leading-none">
-                <span className="font-display text-[19px] text-ink-800 tracking-[0.08em]">灵境</span>
-                <span className="hidden sm:block eyebrow mt-1">LINGJING · TRAVEL BOOK</span>
-              </div>
+          <div className="flex items-center gap-2">
+            <DoodleStar className="w-6 h-6 text-ink-700" />
+            <div className="leading-none">
+              <span className="font-display text-[19px] text-ink-800 tracking-[0.08em]">灵境</span>
+              <span className="hidden sm:block eyebrow mt-1">LINGJING · TRAVEL BOOK</span>
             </div>
-          )}
+          </div>
           <div className="flex items-center gap-1">
             {!user?.isGuest && (
               <NavLink
