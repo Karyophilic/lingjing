@@ -9,12 +9,12 @@ import {
 
 // 低饱和标本色 — 与全站奶油纸 / 墨色统一
 const TONES = [
-  { main: '#C08A2E', soft: '#EEDDB8', ink: '#6B4A12' },
-  { main: '#8C9A7A', soft: '#E0E4D3', ink: '#46503C' },
-  { main: '#B96B4D', soft: '#EBD7CC', ink: '#6E3D2A' },
-  { main: '#6F7F8C', soft: '#DCE2E6', ink: '#3E4B55' },
-  { main: '#9A839B', soft: '#E6DEE6', ink: '#5A4A5B' },
-  { main: '#A98467', soft: '#E7D9CB', ink: '#5F4632' },
+  { main: '#8FA07C', soft: '#DCE3D0', ink: '#4A5A3C' },
+  { main: '#8FB4C9', soft: '#DCE9EF', ink: '#3F5A68' },
+  { main: '#B97A5A', soft: '#EBD8CB', ink: '#6E3D2A' },
+  { main: '#A66B4E', soft: '#E7D3C4', ink: '#6B4530' },
+  { main: '#9C9788', soft: '#E5E1D6', ink: '#5A574C' },
+  { main: '#B7A98A', soft: '#EBE4D2', ink: '#6B5F45' },
 ]
 
 const GLYPHS = [
@@ -318,8 +318,8 @@ export default function Universe() {
                     style={{
                       width: node.size,
                       height: node.size,
-                      background: `radial-gradient(circle at 34% 28%, #FFFBEF 0%, ${node.tone.soft} 55%, ${node.tone.main}66 100%)`,
-                      borderColor: `${node.tone.main}55`,
+                      background: `radial-gradient(circle at 34% 28%, #FFFBEF 0%, ${node.tone.soft} 40%, ${node.tone.main}99 100%)`,
+                      borderColor: 'rgba(74,74,66,0.62)',
                     }}
                   >
                     <span className="atlas-glyph" style={{ color: node.tone.ink }}>{node.glyph}</span>

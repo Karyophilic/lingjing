@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../stores/auth'
-import { Sparkles, ArrowRight, User, Lock, LogIn, UserPlus, Phone, Mail, Coffee } from 'lucide-react'
+import { ArrowRight, User, Lock, LogIn, UserPlus, Phone, Mail } from 'lucide-react'
+import { DoodleStar, DoodleLeaf, DoodleCat } from '../components/Doodle'
 
 export default function Login() {
   const { login, register, loginAsGuest } = useAuth()
@@ -55,88 +56,76 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #FAF4E7 0%, #F3E8D0 42%, #EAD9B7 100%)' }}
-    >
-      {/* 装饰性几何元素 */}
-      <div className="absolute top-10 left-10 w-48 h-48 rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, rgba(91,155,213,0.3) 0%, transparent 70%)' }} />
-      <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full opacity-15"
-        style={{ background: 'radial-gradient(circle, rgba(255,140,105,0.2) 0%, transparent 70%)' }} />
-      <div className="absolute top-1/3 right-1/4 w-3 h-3 rounded-full bg-coral opacity-30" />
-      <div className="absolute bottom-1/4 left-1/3 w-4 h-4 rounded-full bg-spark-300 opacity-20" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-10">
+      {/* 水彩与涂鸦 */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-8%] left-[-10%] w-72 h-72 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(169,183,154,0.22) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-[-10%] right-[-8%] w-80 h-80 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(169,198,216,0.22) 0%, transparent 70%)' }} />
+        <DoodleStar className="absolute top-10 right-8 w-16 h-16 text-spark-500/50 rotate-12" />
+        <DoodleLeaf className="absolute bottom-16 left-6 w-24 h-24 text-ink-700/20 -rotate-12" />
+        <DoodleStar className="absolute bottom-28 right-12 w-5 h-5 text-ink-400/50" />
+      </div>
 
       <div className="w-full max-w-sm relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4 animate-float">💡</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">灵境</h1>
-          <p className="text-gray-500 text-sm">灵感即社交 · 让每个念头找到归属</p>
-          <div className="flex items-center justify-center gap-1 mt-2 text-xs" style={{ color: '#A9762A' }}>
-            <Sparkles size={14} />
-            <span>AI 驱动的灵感社交空间</span>
+        {/* 手绘封面 */}
+        <div className="text-center mb-7">
+          <div className="mx-auto w-16 h-16 rounded-full bg-paper-50 border border-ink-700/35 grid place-items-center mb-4 shadow-[2px_3px_0_rgba(74,74,66,0.08)]">
+            <DoodleCat className="w-10 h-10 text-ink-700" />
           </div>
+          <p className="eyebrow">LINGJING · TRAVEL BOOK</p>
+          <h1 className="text-[38px] leading-none mt-1 text-ink-800">灵境</h1>
+          <p className="text-sm text-ink-500 mt-2">灵感手帐 · 把每个念头写进山野与河流之间</p>
         </div>
 
-        {/* Splash 文案 */}
-        <div className="mb-6 px-5 py-4 rounded-2xl text-center animate-slide-up"
-          style={{
-            background: 'linear-gradient(135deg, rgba(192,138,46,0.10), rgba(255,140,105,0.05))',
-            border: '1px solid rgba(91,155,213,0.12)',
-          }}
-        >
-          <p className="text-sm font-medium leading-relaxed" style={{ color: '#A9762A' }}>
-            你那些"算了不记了"的灵感，可能价值一百万 💰
+        {/* 今日签 */}
+        <div className="sketch-card px-5 py-4 text-center mb-5 -rotate-[0.4deg]">
+          <p className="text-sm text-ink-600 leading-relaxed">
+            你那些「算了不记了」的灵感，
+            <br />可能正等着被写下来。
           </p>
+          <p className="mt-2 text-[11px] text-ink-400 tracking-[0.14em]">— 今日签 —</p>
         </div>
 
         {/* 表单 */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
-            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <User size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               type="text" placeholder="输入昵称..."
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
-                focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
-                transition-all duration-200 text-base placeholder:text-gray-300"
+              className="input pl-11 text-base"
               value={username} onChange={e => setUsername(e.target.value)}
               autoFocus maxLength={20}
             />
           </div>
 
           <div className="relative">
-            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Lock size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               type="password" placeholder="输入密码..."
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
-                focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
-                transition-all duration-200 text-base placeholder:text-gray-300"
+              className="input pl-11 text-base"
               value={password} onChange={e => setPassword(e.target.value)}
               maxLength={30}
             />
           </div>
 
-          {/* 注册时显示手机号/邮箱 */}
           {isRegister && (
             <>
               <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
                 <input
                   type="tel" placeholder="手机号（选填）"
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
-                    focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
-                    transition-all duration-200 text-base placeholder:text-gray-300"
+                  className="input pl-11 text-base"
                   value={phone} onChange={e => setPhone(e.target.value)}
                   maxLength={11}
                 />
               </div>
               <div className="relative">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
                 <input
                   type="email" placeholder="邮箱（选填）"
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-beige-300 bg-paper-50/80
-                    focus:outline-none focus:ring-2 focus:ring-spark-300/40 focus:border-spark-400
-                    transition-all duration-200 text-base placeholder:text-gray-300"
+                  className="input pl-11 text-base"
                   value={email} onChange={e => setEmail(e.target.value)}
                 />
               </div>
@@ -144,32 +133,25 @@ export default function Login() {
           )}
 
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm text-center">{error}</div>
+            <div className="p-3 sketch-card text-coral-500 text-sm text-center">{error}</div>
           )}
 
           <button
             type="submit"
             disabled={!username.trim() || !password.trim() || loading}
-            className="w-full flex items-center justify-center gap-2 text-base py-3 rounded-2xl font-semibold
-              text-white transition-all duration-200 active:scale-95
-              disabled:opacity-50 disabled:cursor-not-allowed
-              shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #2F2A21, #4A4437)',
-              boxShadow: '0 6px 18px rgba(43,39,31,0.2)',
-            }}
+            className="btn-primary w-full flex items-center justify-center gap-2 text-base"
           >
             {loading ? (
               <>
-                <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="inline-block w-4 h-4 border-2 border-paper-50 border-t-transparent rounded-full animate-spin" />
                 {isRegister ? '注册中...' : '登录中...'}
               </>
             ) : (
               <>
                 {isRegister ? (
-                  <><UserPlus size={20} /> 注册并进入灵境</>
+                  <><UserPlus size={18} /> 注册并进入手帐</>
                 ) : (
-                  <><LogIn size={20} /> 进入灵境 <ArrowRight size={18} /></>
+                  <><LogIn size={18} /> 进入手帐 <ArrowRight size={16} /></>
                 )}
               </>
             )}
@@ -180,29 +162,23 @@ export default function Login() {
         <div className="mt-4 text-center">
           <button
             onClick={() => { setIsRegister(!isRegister); setError('') }}
-            className="text-sm transition-colors" style={{ color: '#A9762A' }}
+            className="text-sm text-spark-600 sketch-underline"
           >
             {isRegister ? '已有账号？直接登录 →' : '还没有账号？注册一个 →'}
           </button>
         </div>
 
         {/* 游客模式 */}
-        <div className="mt-3 text-center">
+        <div className="mt-4 text-center">
           <button
             onClick={handleGuest}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl border text-sm font-medium
-              transition-all duration-200 hover:shadow-sm active:scale-95"
-            style={{
-              borderColor: '#E8D5C4',
-              color: '#8B7E6E',
-              background: 'rgba(255,255,255,0.5)',
-            }}
+            className="btn-ghost inline-flex items-center gap-1.5 px-5 py-2.5 text-sm"
           >
-            <Coffee size={16} />
+            <DoodleCat className="w-4 h-4" />
             游客模式浏览
           </button>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-ink-400 mt-2">
             游客可浏览广场和星球，但无法点赞评论
           </p>
         </div>
@@ -211,13 +187,13 @@ export default function Login() {
         <div className="mt-3 text-center">
           <button
             onClick={quickStart}
-            className="text-sm text-gray-400 hover:text-spark-500 transition-colors"
+            className="text-sm text-ink-400 hover:text-ink-700 transition-colors"
           >
-            或者，直接<u>快速体验</u> ✨
+            或者，直接<span className="sketch-underline">快速体验</span> ✨
           </button>
         </div>
 
-        <p className="text-center text-xs text-gray-300 mt-6">
+        <p className="text-center text-xs text-ink-300 mt-6">
           所有数据存储在你本地浏览器中
         </p>
       </div>

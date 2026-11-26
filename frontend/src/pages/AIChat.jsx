@@ -4,25 +4,15 @@ import { localAI } from '../api/local'
 import { hasApiKey, getConfigSummary } from '../api/aiConfig'
 import { friendlyErrorMessage } from '../api/deepseek'
 import ApiSettingsModal from '../components/ApiSettingsModal'
+import { DoodleCat } from '../components/Doodle'
 import { Send, Trash2, Sparkles, Lightbulb, RefreshCw, Menu, Plus, X, Key, ChevronRight, AlertCircle } from 'lucide-react'
 
-// 小灵儿头像（静态、不可拖动）
+// 小灵儿头像 — 手绘猫
 function MascotAvatar({ size = 40 }) {
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
-      <div className="absolute inset-0 rounded-full gentle-glow" />
-      <div className="mascot-float relative w-full h-full rounded-full bg-gradient-to-br from-spark-400 via-spark-500 to-coral-500 shadow-lg shadow-spark-400/30 flex items-center justify-center">
-        <div className="absolute inset-[3px] rounded-full bg-gradient-to-b from-white/30 to-transparent" />
-        <div className="relative z-10 flex gap-2">
-          <div className="eye-blink w-[6px] h-[8px] rounded-full bg-gray-800 relative">
-            <div className="absolute top-[1.5px] left-[1.5px] w-[2px] h-[2px] rounded-full bg-white" />
-          </div>
-          <div className="eye-blink w-[6px] h-[8px] rounded-full bg-gray-800 relative">
-            <div className="absolute top-[1.5px] left-[1.5px] w-[2px] h-[2px] rounded-full bg-white" />
-          </div>
-        </div>
-        <div className="absolute bottom-1.5 left-1 w-[5px] h-[3px] rounded-full bg-pink-300/60" />
-        <div className="absolute bottom-1.5 right-1 w-[5px] h-[3px] rounded-full bg-pink-300/60" />
+      <div className="mascot-float relative w-full h-full rounded-full bg-paper-50 border border-ink-700/35 grid place-items-center shadow-[2px_3px_0_rgba(74,74,66,0.08)]">
+        <DoodleCat className="w-[72%] h-[72%] text-ink-700" />
       </div>
     </div>
   )
@@ -195,7 +185,7 @@ export default function AIChat() {
   const apiReady = cfgSummary.configured
 
   return (
-    <main className="max-w-lg mx-auto flex flex-col h-[calc(100vh-7rem)]">
+    <main className="max-w-lg mx-auto flex flex-col h-[calc(100vh-10rem)]">
       {/* 头部 */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-beige-300/30 bg-white/70 backdrop-blur-xl sticky top-14 z-40">
         <div className="flex items-center gap-3">

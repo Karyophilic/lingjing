@@ -27,14 +27,14 @@ function waterfall(items) {
 }
 
 const COVER_GRADIENTS = [
-  'linear-gradient(135deg, #F2E5C8, #E5CFA3)',
-  'linear-gradient(135deg, #E9EBDE, #D3D9C0)',
-  'linear-gradient(135deg, #EDD9CD, #DDBCA9)',
-  'linear-gradient(135deg, #E7DFE7, #CFBFD1)',
-  'linear-gradient(135deg, #F4EAD2, #E4CB93)',
-  'linear-gradient(135deg, #DDE3E7, #BFCAD2)',
-  'linear-gradient(135deg, #E8DACC, #CFB69E)',
-  'linear-gradient(135deg, #F7F0DE, #E6D8BA)',
+  'linear-gradient(135deg, #E9EDE0, #D5DEC6)',
+  'linear-gradient(135deg, #E4EDF2, #CFE0E9)',
+  'linear-gradient(135deg, #F0E4DA, #E2CDBE)',
+  'linear-gradient(135deg, #ECE7DA, #D9D2C2)',
+  'linear-gradient(135deg, #EDE7D5, #D8CFB8)',
+  'linear-gradient(135deg, #DDE8E0, #C4D3C4)',
+  'linear-gradient(135deg, #E8E1D2, #CFC3AC)',
+  'linear-gradient(135deg, #E7EEF2, #CBDDE6)',
 ]
 
 function coverGradient(id) {

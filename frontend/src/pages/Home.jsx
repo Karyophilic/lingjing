@@ -4,8 +4,11 @@ import { useAuth } from '../stores/auth'
 import { localInspirations, localAI } from '../api/local'
 import CreateInspiration from '../components/CreateInspiration'
 import InspirationCard from '../components/InspirationCard'
-import Mascot from '../components/Mascot'
-import { Plus, Lightbulb, Zap, MessageSquare } from 'lucide-react'
+import HeroSketch from '../components/HeroSketch'
+import {
+  DoodleNotebook, DoodleChat, DoodleBell, DoodleMap, DoodlePin,
+  DoodleArrow, DoodleStar, DoodleLeaf,
+} from '../components/Doodle'
 
 export default function Home() {
   const { user } = useAuth()
@@ -19,13 +22,8 @@ export default function Home() {
     try {
       const inspRes = localInspirations.getMyList(1)
       const wakeupRes = localAI.getWakeup()
-
-      if (inspRes.success) {
-        setRecentInspirations(inspRes.data.items.slice(0, 3))
-      }
-      if (wakeupRes.success) {
-        setWakeupCount(wakeupRes.data.items.length)
-      }
+      if (inspRes.success) setRecentInspirations(inspRes.data.items.slice(0, 3))
+      if (wakeupRes.success) setWakeupCount(wakeupRes.data.items.length)
     } catch (err) {
       console.error('加载数据失败', err)
     } finally {
@@ -37,105 +35,127 @@ export default function Home() {
     loadData()
   }, [])
 
+  const now = new Date()
+  const dateLabel = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
+  const weekday = now.toLocaleDateString('zh-CN', { weekday: 'long' })
+
   return (
-    <main className="max-w-lg mx-auto px-4 pt-6">
-      {/* 欢迎区 — 柔和蓝色渐变 */}
-      <div className="mb-8 p-6 rounded-3xl relative overflow-hidden border border-beige-300/70"
-        style={{
-          background: 'linear-gradient(135deg, #F7EEDA 0%, #F0E2C4 52%, #E7D4B0 100%)',
-        }}
-      >
-        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-25"
-          style={{ background: 'radial-gradient(circle, #FFFBEF 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-4 left-1/2 w-16 h-16 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #FFFBEF 0%, transparent 70%)' }} />
+    <main className="max-w-lg mx-auto pb-28">
+      {/* 手绘封面 */}
+      <section className="relative hero-paper overflow-hidden rounded-b-[34px] border-b border-ink-700/15">
+        <HeroSketch className="w-full h-[330px] object-cover" />
 
-        <p className="eyebrow relative z-10 mb-2">
-          TODAY · {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}
-        </p>
-        <h1 className="text-2xl text-ink-800 mb-1 relative z-10">
-          你好，{user?.username || '探索者'}
-        </h1>
-        <p className="text-ink-500 relative z-10">今天有什么新的灵感？</p>
-        {user?.isGuest && (
-          <p className="text-xs text-coral-500 mt-2 relative z-10">游客模式 · 灵感不会丢失，但无法同步到其他设备</p>
-        )}
-      </div>
+        <div className="absolute top-6 inset-x-0 px-6 text-center pointer-events-none">
+          <p className="eyebrow text-ink-500">LINGJING · TRAVEL BOOK</p>
+          <h1
+            className="text-[42px] leading-none mt-1.5 text-ink-800"
+            style={{ textShadow: '2px 2px 0 rgba(250,247,238,0.85)' }}
+          >
+            灵感手帐
+          </h1>
+          <p className="mt-1 text-xs text-ink-500 tracking-[0.12em]">把念头写进山野与河流之间</p>
+        </div>
 
-      {/* 快捷操作卡片 */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+        <div className="absolute top-3 left-5 flex items-center gap-1.5 text-[10px] text-ink-500 tracking-[0.18em]">
+          <DoodleStar className="w-4 h-4 text-spark-500" />
+          VOL. 01
+        </div>
+      </section>
+
+      {/* 问候 */}
+      <section className="px-5 pt-5">
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="text-[32px] leading-none text-ink-800">
+            Hi，{user?.username || '旅人'}
+          </h2>
+          {user?.isGuest && (
+            <span className="tag whitespace-nowrap">游客模式</span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-3 text-sm text-ink-500">
+          <span>{dateLabel} · {weekday} ·</span>
+          <span className="hidden sm:inline w-5 h-px bg-ink-300" />
+          <span>今天适合记下一个小念头</span>
+        </div>
+      </section>
+
+      {/* 新建灵感 + 快捷入口 */}
+      <section className="px-5 mt-5">
         <button
           onClick={() => setShowCreate(true)}
-          className="card flex flex-col items-center justify-center py-5 hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer group"
+          className="sketch-card relative w-full text-left p-5 overflow-hidden"
         >
-          <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center mb-2 group-hover:bg-primary-100 transition-colors">
-            <Plus size={24} className="text-primary-500" />
-          </div>
-          <span className="font-semibold text-gray-800 text-sm">记录</span>
-          <span className="text-[10px] text-gray-400 mt-0.5">新灵感</span>
+          <DoodleMap className="absolute -right-3 -bottom-5 w-32 h-32 text-ink-700/15" />
+          <DoodlePin className="absolute right-16 bottom-5 w-8 h-8 text-spark-500/70" />
+          <p className="eyebrow">NEW ENTRY · 01</p>
+          <p className="mt-1 text-[26px] leading-tight text-ink-800 sketch-underline inline-block">
+            记录新灵感
+          </p>
+          <p className="text-sm text-ink-500 mt-3 max-w-[80%]">
+            让一个还没成形的念头，先在这里落笔。
+          </p>
+          <span className="inline-flex items-center gap-2 mt-3 text-xs tracking-[0.14em] text-ink-600">
+            LET'S GO <DoodleArrow className="w-9 h-4" />
+          </span>
         </button>
 
-        <button
-          onClick={() => navigate('/ai-chat')}
-          className="card flex flex-col items-center justify-center py-5 hover:border-primary-200 hover:bg-sky-50/30 cursor-pointer group"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-sky-50 flex items-center justify-center mb-2 group-hover:bg-sky-100 transition-colors">
-            <MessageSquare size={24} className="text-sky-500" />
-          </div>
-          <span className="font-semibold text-gray-800 text-sm">AI对话</span>
-          <span className="text-[10px] text-gray-400 mt-0.5">激发灵感</span>
-        </button>
-
-        <button
-          onClick={() => navigate('/wakeup')}
-          className="card flex flex-col items-center justify-center py-5 hover:border-coral-400/30 hover:bg-orange-50/30 cursor-pointer group relative"
-        >
-          {wakeupCount > 0 && (
-            <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-              {wakeupCount}
-            </span>
-          )}
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 flex items-center justify-center mb-2 group-hover:bg-amber-100 transition-colors">
-            <Zap size={24} className="text-spark-500" />
-          </div>
-          <span className="font-semibold text-gray-800 text-sm">唤醒</span>
-          <span className="text-[10px] text-gray-400 mt-0.5">找回灵感</span>
-        </button>
-      </div>
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="sketch-card flex flex-col items-center justify-center py-4"
+          >
+            <DoodleNotebook className="w-10 h-10 text-ink-700" />
+            <span className="mt-2 text-sm text-ink-700 sketch-underline">灵感清单</span>
+          </button>
+          <button
+            onClick={() => navigate('/ai-chat')}
+            className="sketch-card flex flex-col items-center justify-center py-4"
+          >
+            <DoodleChat className="w-10 h-10 text-ink-700" />
+            <span className="mt-2 text-sm text-ink-700 sketch-underline">AI 对话</span>
+          </button>
+          <button
+            onClick={() => navigate('/wakeup')}
+            className="sketch-card relative flex flex-col items-center justify-center py-4"
+          >
+            {wakeupCount > 0 && (
+              <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-coral-500 text-paper-50 text-[10px] flex items-center justify-center border border-paper-50">
+                {wakeupCount}
+              </span>
+            )}
+            <DoodleBell className="w-10 h-10 text-ink-700" />
+            <span className="mt-2 text-sm text-ink-700 sketch-underline">唤醒</span>
+          </button>
+        </div>
+      </section>
 
       {/* 最近灵感 */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Lightbulb size={20} className="text-spark-500" />
-            最近灵感
+      <section className="px-5 mt-8">
+        <div className="flex items-end justify-between mb-3">
+          <h2 className="text-2xl text-ink-800 flex items-center gap-2">
+            <DoodleLeaf className="w-6 h-6" style={{ color: '#7E8F6D' }} />
+            最近的念头
           </h2>
           {recentInspirations.length > 0 && (
             <button
               onClick={() => navigate('/profile')}
-              className="text-sm text-primary-500 hover:text-primary-600"
+              className="text-xs text-ink-500 sketch-underline"
             >
-              查看全部 →
+              全部 →
             </button>
           )}
         </div>
 
         {loading ? (
-          <div className="card flex items-center justify-center py-12">
-            <div className="animate-pulse-soft text-3xl">💡</div>
+          <div className="sketch-card flex items-center justify-center py-12">
+            <div className="animate-pulse-soft text-2xl">✎</div>
           </div>
         ) : recentInspirations.length === 0 ? (
-          <div className="card text-center py-12">
-            <div className="text-5xl mb-4">✨</div>
-            <p className="text-gray-800 font-medium mb-2">还没有灵感记录</p>
-            <p className="text-gray-400 text-sm mb-4">
-              每一个伟大的想法都始于一个小灵感
-            </p>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="btn-primary inline-flex items-center gap-2"
-            >
-              <Plus size={18} /> 记录第一个灵感
+          <div className="sketch-card text-center py-10 px-5">
+            <p className="font-display text-2xl text-ink-700 mb-2">还没有落笔</p>
+            <p className="text-sm text-ink-500 mb-4">每一个伟大的想法，都始于随手写下的一行字。</p>
+            <button onClick={() => setShowCreate(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
+              写下第一个念头
             </button>
           </div>
         ) : (
@@ -145,18 +165,7 @@ export default function Home() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* 小灵儿 */}
-      <Mascot />
-
-      {/* 悬浮记录按钮 */}
-      <button
-        onClick={() => setShowCreate(true)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 flex items-center justify-center hover:bg-primary-600 active:scale-95 transition-all duration-200 sm:hidden"
-      >
-        <Plus size={28} />
-      </button>
+      </section>
 
       {showCreate && (
         <CreateInspiration

@@ -1,21 +1,25 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../stores/auth'
-import { Lightbulb, Compass, MessageCircle, MessageSquare, User, Globe, LogOut, Mail } from 'lucide-react'
+import { Mail, LogOut } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { localMessages } from '../api/local'
+import {
+  DoodleHouse, DoodleMap, DoodlePlanet, DoodleChat, DoodlePerson, DoodleStar,
+} from './Doodle'
 
 const navItems = [
-  { to: '/', icon: Lightbulb, label: '记录' },
-  { to: '/square', icon: Compass, label: '广场' },
-  { to: '/universe', icon: Globe, label: '星球' },
-  { to: '/ai-chat', icon: MessageSquare, label: 'AI' },
-  { to: '/profile', icon: User, label: '我的' },
+  { to: '/', icon: DoodleHouse, label: '记录' },
+  { to: '/square', icon: DoodleMap, label: '广场' },
+  { to: '/universe', icon: DoodlePlanet, label: '星球' },
+  { to: '/ai-chat', icon: DoodleChat, label: 'AI' },
+  { to: '/profile', icon: DoodlePerson, label: '我的' },
 ]
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
+  const isHome = location.pathname === '/'
 
   useEffect(() => {
     if (user && !user.isGuest) {
@@ -29,28 +33,30 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 顶部栏 */}
-      <header className="sticky top-0 z-50 bg-paper-50/80 backdrop-blur-xl border-b border-beige-300/70">
+      {/* 顶部栏：首页悬浮在插画上，其他页留在纸面上 */}
+      <header className={`${isHome ? 'absolute bg-transparent' : 'sticky bg-paper-100/80 backdrop-blur-xl border-b border-ink-700/15'} top-0 inset-x-0 z-50`}>
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-full bg-ink-800 text-paper-50 grid place-items-center text-[13px] leading-none">
-              ✦
-            </span>
-            <div className="leading-none">
-              <span className="font-display text-lg text-ink-800 tracking-[0.12em]">灵境</span>
-              <span className="hidden sm:block eyebrow mt-1">LINGJING</span>
+          {isHome ? (
+            <span className="w-6" aria-hidden="true" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <DoodleStar className="w-6 h-6 text-ink-700" />
+              <div className="leading-none">
+                <span className="font-display text-[19px] text-ink-800 tracking-[0.08em]">灵境</span>
+                <span className="hidden sm:block eyebrow mt-1">LINGJING · TRAVEL BOOK</span>
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex items-center gap-1">
-            {/* 私信按钮 */}
             {!user?.isGuest && (
               <NavLink
                 to="/messages"
-                className="relative p-2 text-ink-400 hover:text-ink-800 transition-colors"
+                className="relative w-9 h-9 grid place-items-center text-ink-500 hover:text-ink-800 transition-colors"
+                aria-label="私信"
               >
-                <Mail size={19} />
+                <Mail size={18} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-coral-500 text-paper-50 text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 rounded-full bg-coral-500 text-paper-50 text-[10px] flex items-center justify-center border border-paper-50">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -58,34 +64,40 @@ export default function Navbar() {
             )}
             <button
               onClick={logout}
-              className="text-ink-400 hover:text-coral-500 transition-colors p-2"
+              className="w-9 h-9 grid place-items-center text-ink-500 hover:text-coral-500 transition-colors"
               title="退出登录"
+              aria-label="退出登录"
             >
-              <LogOut size={19} />
+              <LogOut size={18} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* 底部导航 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-paper-50/85 backdrop-blur-xl border-t border-beige-300/70 safe-area-bottom">
-        <div className="max-w-lg mx-auto flex justify-around py-2">
-          {navItems.map(({ to, icon: Icon, label }) => {
-            const active = location.pathname === to
-            return (
-              <NavLink
-                key={to}
-                to={to}
-                className={`flex flex-col items-center gap-1 px-3 py-1 transition-colors ${
-                  active ? 'text-ink-800' : 'text-ink-300 hover:text-ink-500'
-                }`}
-              >
-                <Icon size={20} strokeWidth={active ? 2.1 : 1.7} />
-                <span className="text-[10px] tracking-[0.08em]">{label}</span>
-                <span className={`w-1 h-1 rounded-full transition-colors ${active ? 'bg-spark-500' : 'bg-transparent'}`} />
-              </NavLink>
-            )
-          })}
+      {/* 底部悬浮胶囊导航 */}
+      <nav className="fixed bottom-3 inset-x-0 z-50 px-4 pointer-events-none">
+        <div className="max-w-sm mx-auto nav-pill pointer-events-auto">
+          <div className="flex justify-around items-end py-2">
+            {navItems.map(({ to, icon: Icon, label }) => {
+              const active = location.pathname === to
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={`relative flex flex-col items-center gap-1 px-3 py-1 transition-colors ${
+                    active ? 'text-ink-800' : 'text-ink-400 hover:text-ink-600'
+                  }`}
+                  aria-label={label}
+                >
+                  <Icon className={`w-[23px] h-[23px] ${active ? '' : 'opacity-80'}`} />
+                  <span className="text-[9px] tracking-[0.08em]">{label}</span>
+                  <span className={`absolute -bottom-0.5 w-4 h-[2px] rounded-full transition-all ${
+                    active ? 'bg-ink-700' : 'bg-transparent'
+                  }`} style={{ transform: 'rotate(-2deg)' }} />
+                </NavLink>
+              )
+            })}
+          </div>
         </div>
       </nav>
     </>
