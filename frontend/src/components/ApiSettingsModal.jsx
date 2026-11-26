@@ -89,7 +89,8 @@ export default function ApiSettingsModal({ open, onClose, onSaved }) {
     setSavedMsg('已清除')
   }
 
-  const urlOk = /^https?:\/\/.+/i.test(baseUrl.trim())
+  // 支持绝对地址或同源相对路径（如站点代理 /api/v1）
+  const urlOk = /^(https?:\/\/.+|\/.+)$/i.test(baseUrl.trim())
 
   return (
     <div
@@ -177,7 +178,7 @@ export default function ApiSettingsModal({ open, onClose, onSaved }) {
           spellCheck={false}
           className={`input text-sm mb-1 ${urlOk ? '' : 'border-red-300'}`}
         />
-        {!urlOk && <p className="text-[11px] text-red-400 mb-2">需要以 http:// 或 https:// 开头</p>}
+        {!urlOk && <p className="text-[11px] text-red-400 mb-2">需要以 http(s):// 开头，或填以 / 开头的同源路径</p>}
 
         {/* Model */}
         <label className="block text-xs font-medium text-gray-600 mb-1.5 mt-2" htmlFor="ai-model">
