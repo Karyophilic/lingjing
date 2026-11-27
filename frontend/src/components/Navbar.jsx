@@ -34,15 +34,38 @@ export default function Navbar() {
     <>
       {/* 顶部栏 */}
       <header className="sticky bg-paper-100/80 backdrop-blur-xl border-b border-ink-700/15 top-0 inset-x-0 z-50">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-lg md:max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <DoodleStar className="w-6 h-6 text-ink-700" />
             <div className="leading-none">
               <span className="font-display text-[19px] text-ink-800 tracking-[0.08em]">灵境</span>
               <span className="hidden sm:block eyebrow mt-1">LINGJING · TRAVEL BOOK</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+
+          {/* PC 端顶部导航 */}
+          <nav className="hidden md:flex items-center gap-1" aria-label="主导航">
+            {navItems.map(({ to, icon: Icon, label }) => {
+              const active = location.pathname === to
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={`flex items-center gap-1.5 px-3 py-2 transition-colors ${
+                    active ? 'text-ink-800' : 'text-ink-400 hover:text-ink-700'
+                  }`}
+                  aria-label={label}
+                >
+                  <Icon className="w-[18px] h-[18px]" />
+                  <span className={`text-[12px] tracking-[0.06em] ${active ? 'sketch-underline' : ''}`}>
+                    {label}
+                  </span>
+                </NavLink>
+              )
+            })}
+          </nav>
+
+          <div className="flex items-center gap-1 flex-shrink-0">
             {!user?.isGuest && (
               <NavLink
                 to="/messages"
@@ -69,8 +92,8 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* 底部悬浮胶囊导航 */}
-      <nav className="fixed bottom-3 inset-x-0 z-50 px-4 pointer-events-none">
+      {/* 移动端底部悬浮胶囊导航（PC 端隐藏，改用顶部导航） */}
+      <nav className="fixed bottom-3 inset-x-0 z-50 px-4 pointer-events-none md:hidden">
         <div className="max-w-sm mx-auto nav-pill pointer-events-auto">
           <div className="flex justify-around items-end py-2">
             {navItems.map(({ to, icon: Icon, label }) => {
